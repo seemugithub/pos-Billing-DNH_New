@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dilli Nihari House</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ─── PASTE YOUR FIREBASE CONFIG HERE ────────────────────────
+  // Go to: https://console.firebase.google.com
+  // Create a project → Realtime Database → Rules: set read/write to true
+  // Project Settings → Your apps → Add Web App → Copy config below
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  // ─────────────────────────────────────────────────────────────
+
+  let firebaseApp, firebaseDB;
+  let syncEnabled = false;
+
+  try {
+    firebaseApp = initializeApp(firebaseConfig);
+    firebaseDB = getDatabase(firebaseApp);
+    syncEnabled = firebaseConfig.apiKey !== "YOUR_API_KEY";
+  } catch(e) {
+    console.warn("Firebase init failed:", e);
+  }
+
+  // Expose to global scope for use by non-module scripts
+  window._fb = { ref, set, onValue, get, db: () => firebaseDB, enabled: () => syncEnabled };
+</script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F5F1EB;
+  --surface:#FFFFFF;
+  --card:#FFFFFF;
+  --accent:#C8380A;
+  --gold:#B8760A;
+  --red:#C8380A;
+  --red2:#A52C08;
+  --green:#1A6B35;
+  --text:#1A1008;
+  --muted:#7A6048;
+  --border:#D8C8A8;
+  --border2:#E8D8B8;
+  --chip-bg:#EDE6D8;
+  --highlight:#FFF3E0;
+  --r:14px;
+  --r-sm:9px;
+  --shadow:0 2px 10px rgba(80,40,0,0.10);
+  --shadow-sm:0 1px 4px rgba(80,40,0,0.08);
+}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Nunito',sans-serif;
+  font-weight:700;
+  min-height:100vh;
+  max-width:430px;
+  margin:0 auto;
+  overflow-x:hidden;
+}
+.screen{display:none;flex-direction:column;min-height:100vh}
+.screen.active{display:flex}
+
+/* Header */
+.header{
+  background:var(--accent);
+  padding:13px 16px 10px;
+  text-align:center;
+  flex-shrink:0;
+  box-shadow:0 2px 8px rgba(180,40,0,0.2);
+  position:relative;
+}
+.header-badge{
+  font-family:'Baloo 2',cursive;
+  font-size:22px;
+  font-weight:800;
+  color:#fff;
+  letter-spacing:0.3px;
+  line-height:1.2;
+}
+.header-sub{
+  font-size:11px;
+  color:rgba(255,255,255,0.78);
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-top:1px;
+  font-weight:700;
+}
+/* Sync indicator in header */
+.sync-dot{
+  position:absolute;top:10px;right:14px;
+  display:flex;align-items:center;gap:4px;
+}
+.sync-dot .dot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(255,255,255,0.3);
+  transition:background 0.4s;
+}
+.sync-dot.ok .dot{background:#4AE08A;box-shadow:0 0 5px #4AE08A88;}
+.sync-dot.err .dot{background:#FF6B6B;}
+.sync-dot span{font-size:9px;color:rgba(255,255,255,0.7);font-weight:800;letter-spacing:0.5px;text-transform:uppercase;}
+
+/* Settings/nav bar */
+.settings-bar{
+  background:var(--surface);
+  border-bottom:2px solid var(--border);
+  padding:8px 10px;
+  display:flex;align-items:center;gap:6px;
+  flex-shrink:0;
+  overflow-x:auto;
+  box-shadow:var(--shadow-sm);
+}
+.settings-bar::-webkit-scrollbar{display:none}
+.s-chip{
+  display:flex;align-items:center;gap:5px;
+  background:var(--chip-bg);
+  border:2px solid var(--border);
+  border-radius:20px;
+  padding:5px 12px;
+  cursor:pointer;
+  transition:all 0.18s;
+  flex-shrink:0;
+  white-space:nowrap;
+}
+.s-chip:active{border-color:var(--accent);background:var(--highlight)}
+.s-chip.active-chip{border-color:var(--accent);background:var(--highlight);box-shadow:0 1px 5px rgba(200,56,10,0.15)}
+.s-chip.printer-ok{border-color:var(--green);background:#E8F5EC}
+.s-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background 0.3s;flex-shrink:0}
+.s-chip.printer-ok .dot{background:var(--green)}
+.s-chip .chip-label{font-size:12px;color:var(--muted);font-weight:800}
+.s-chip.active-chip .chip-label{color:var(--accent)}
+.s-chip.printer-ok .chip-label{color:var(--green)}
+.s-chip .chip-icon{font-size:13px}
+.s-divider{width:1px;height:20px;background:var(--border);flex-shrink:0}
+
+/* Category tab bar */
+.cat-bar{
+  background:var(--surface);
+  border-bottom:2px solid var(--border2);
+  padding:8px 10px 6px;
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  flex-shrink:0;
+}
+.cat-bar::-webkit-scrollbar{display:none}
+.cat-tab{
+  padding:5px 14px;
+  border-radius:20px;
+  border:2px solid var(--border);
+  background:var(--chip-bg);
+  color:var(--muted);
+  font-family:'Nunito',sans-serif;
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all 0.15s;
+  flex-shrink:0;
+}
+.cat-tab.active{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+  box-shadow:0 2px 8px rgba(200,56,10,0.25);
+}
+.cat-tab:active{transform:scale(0.95)}
+
+/* Bottom nav */
+.nav{display:flex;background:var(--surface);border-top:2px solid var(--border);flex-shrink:0;box-shadow:0 -2px 8px rgba(80,40,0,0.07)}
+.nav-btn{flex:1;padding:10px 4px 8px;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:color 0.2s}
+.nav-btn.active{color:var(--accent)}
+.nav-icon{font-size:20px}
+
+/* Bill screen */
+.bill-body{flex:1;overflow-y:auto;padding:12px 12px 4px;background:var(--bg)}
+.section-label{font-size:12px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:800}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.menu-item{
+  background:var(--card);
+  border:2px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:11px 11px 9px;
+  cursor:pointer;
+  transition:all 0.15s;
+  position:relative;
+  overflow:hidden;
+  box-shadow:var(--shadow-sm);
+}
+.menu-item:active{transform:scale(0.96);border-color:var(--accent);background:var(--highlight)}
+.item-cat-tag{
+  display:inline-block;
+  font-size:10px;
+  font-weight:800;
+  color:var(--muted);
+  background:var(--chip-bg);
+  border-radius:6px;
+  padding:1px 6px;
+  margin-bottom:4px;
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+}
+.item-name{font-size:14px;font-weight:800;color:var(--text);line-height:1.3}
+.item-price{font-size:16px;font-weight:900;color:var(--accent);margin-top:4px;font-family:'Baloo 2',cursive}
+.item-qty-badge{
+  position:absolute;top:6px;right:6px;
+  background:var(--accent);color:#fff;
+  border-radius:50%;width:22px;height:22px;
+  font-size:12px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 5px rgba(200,56,10,0.3);
+}
+.order-section{
+  background:var(--card);
+  border:2px solid var(--border);
+  border-radius:var(--r);
+  padding:12px;
+  margin-bottom:10px;
+  box-shadow:var(--shadow-sm);
+}
+.order-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2)}
+.order-row:last-child{border-bottom:none}
+.order-name{flex:1;font-size:14px;font-weight:800;color:var(--text)}
+
+/* Quantity controls — now with editable input */
+.qty-ctrl{display:flex;align-items:center;gap:6px}
+.qty-btn{
+  width:28px;height:28px;border-radius:50%;
+  border:2px solid var(--border);
+  background:var(--chip-bg);
+  color:var(--accent);
+  font-size:18px;font-weight:900;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;
+  flex-shrink:0;
+}
+.qty-btn:active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.qty-input{
+  font-size:15px;font-weight:900;
+  width:44px;text-align:center;
+  color:var(--text);
+  border:2px solid var(--border);
+  border-radius:var(--r-sm);
+  background:var(--bg);
+  font-family:'Nunito',sans-serif;
+  padding:2px 4px;
+  outline:none;
+  -moz-appearance:textfield;
+}
+.qty-input:focus{border-color:var(--accent);}
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+.order-subtotal{font-size:14px;font-weight:800;color:var(--gold);min-width:55px;text-align:right}
+.total-bar{
+  background:var(--highlight);
+  border:2px solid var(--accent);
+  border-radius:var(--r);
+  padding:13px 15px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+  box-shadow:var(--shadow-sm);
+}
+.total-label{font-size:13px;color:var(--muted);font-weight:800}
+.total-amt{font-family:'Baloo 2',cursive;font-size:30px;font-weight:800;color:var(--accent)}
+.print-btn{
+  width:100%;padding:15px;
+  background:var(--accent);
+  border:none;border-radius:var(--r);
+  color:#fff;
+  font-family:'Nunito',sans-serif;
+  font-size:17px;font-weight:900;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all 0.2s;
+  margin-bottom:8px;
+  box-shadow:0 3px 12px rgba(200,56,10,0.25);
+}
+.print-btn:active{transform:scale(0.98);background:var(--red2)}
+.clear-btn{
+  width:100%;padding:11px;
+  background:none;
+  border:2px solid var(--border);
+  border-radius:var(--r);
+  color:var(--muted);
+  font-family:'Nunito',sans-serif;
+  font-size:14px;font-weight:800;
+  cursor:pointer;transition:all 0.2s;margin-bottom:14px;
+}
+.clear-btn:active{border-color:var(--red);color:var(--red)}
+
+/* Summary screen */
+.summary-body{flex:1;overflow-y:auto;padding:12px;background:var(--bg)}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.stat-card{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:var(--r);padding:14px;
+  box-shadow:var(--shadow-sm);
+}
+.stat-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;font-weight:800}
+.stat-val{font-family:'Baloo 2',cursive;font-size:26px;font-weight:800;color:var(--accent)}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:3px;font-weight:700}
+.sales-list{background:var(--card);border:2px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm)}
+.sales-item{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border2)}
+.sales-item:last-child{border-bottom:none}
+.sales-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:10px;flex-shrink:0}
+.sales-name{flex:1;font-size:14px;font-weight:800;color:var(--text)}
+.sales-count{font-size:14px;font-weight:900;color:var(--accent);margin-right:10px}
+.sales-revenue{font-size:12px;color:var(--muted);font-weight:700}
+.date-row{display:flex;gap:8px;margin-bottom:10px}
+.date-btn{
+  flex:1;padding:9px;
+  background:var(--card);border:2px solid var(--border);
+  border-radius:var(--r-sm);color:var(--muted);
+  font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;
+  cursor:pointer;transition:all 0.2s;
+}
+.date-btn.active{border-color:var(--accent);color:var(--accent);background:var(--highlight)}
+
+/* Menu editor */
+.menu-body{flex:1;overflow-y:auto;padding:12px;background:var(--bg)}
+.menu-edit-item{
+  background:var(--card);
+  border:2px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:12px 12px;
+  margin-bottom:8px;
+  display:flex;align-items:center;gap:10px;
+  box-shadow:var(--shadow-sm);
+}
+.menu-edit-left{flex:1;min-width:0}
+.menu-edit-cat{font-size:10px;font-weight:800;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px}
+.menu-edit-name{font-size:15px;font-weight:800;color:var(--text)}
+.menu-edit-price{font-size:16px;font-weight:900;color:var(--accent);font-family:'Baloo 2',cursive;margin-left:4px;flex-shrink:0}
+.icon-btn{
+  width:34px;height:34px;
+  background:var(--chip-bg);
+  border:2px solid var(--border);
+  border-radius:var(--r-sm);
+  color:var(--muted);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.18s;
+  font-size:15px;
+  flex-shrink:0;
+}
+.icon-btn.edit:active{border-color:var(--gold);color:var(--gold);background:#FFF8E0}
+.icon-btn.del:active{border-color:var(--red);color:var(--red);background:#FFF0EE}
+.add-item-form{
+  background:var(--card);
+  border:2px solid var(--accent);
+  border-radius:var(--r);
+  padding:15px;
+  margin-top:4px;
+  box-shadow:var(--shadow-sm);
+}
+.form-title{font-size:14px;font-weight:900;color:var(--text);margin-bottom:12px;letter-spacing:0.3px}
+.form-row{margin-bottom:10px}
+.form-label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block;font-weight:800}
+.form-input{
+  width:100%;padding:10px 12px;
+  background:var(--bg);
+  border:2px solid var(--border);
+  border-radius:var(--r-sm);
+  color:var(--text);
+  font-family:'Nunito',sans-serif;
+  font-size:15px;font-weight:700;
+  outline:none;
+  transition:border-color 0.2s;
+}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--border);font-weight:600}
+.add-submit{
+  width:100%;padding:12px;
+  background:var(--accent);
+  border:none;border-radius:var(--r-sm);
+  color:#fff;
+  font-family:'Nunito',sans-serif;
+  font-size:15px;font-weight:900;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.add-submit:active{background:var(--red2)}
+
+/* Edit modal */
+.edit-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.55);
+  z-index:200;
+  display:none;align-items:center;justify-content:center;
+  padding:20px;
+}
+.edit-overlay.open{display:flex}
+.edit-card{
+  background:var(--surface);
+  border-radius:var(--r);
+  padding:20px;
+  width:100%;max-width:340px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.2);
+}
+.edit-title{font-size:16px;font-weight:900;color:var(--text);margin-bottom:14px}
+.edit-actions{display:flex;gap:8px;margin-top:14px}
+.edit-cancel{flex:1;padding:11px;background:var(--chip-bg);border:2px solid var(--border);border-radius:var(--r-sm);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
+.edit-save{flex:2;padding:11px;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer}
+
+/* Printer screen */
+.printer-body{flex:1;overflow-y:auto;padding:16px;background:var(--bg)}
+.bt-status-card{background:var(--card);border:2px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px;text-align:center;box-shadow:var(--shadow-sm)}
+.bt-icon-wrap{width:64px;height:64px;border-radius:50%;background:var(--chip-bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;transition:all 0.4s}
+.bt-icon-wrap.connected{border-color:var(--green);background:#E8F5EC}
+.bt-icon-wrap.scanning{border-color:var(--accent);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(200,56,10,0.3)}50%{box-shadow:0 0 0 10px rgba(200,56,10,0)}}
+.bt-status-title{font-size:15px;font-weight:900;color:var(--text);margin-bottom:4px}
+.bt-status-sub{font-size:12px;color:var(--muted);font-weight:700}
+.bt-status-sub.ok{color:var(--green)}
+.scan-btn{width:100%;padding:13px;background:var(--accent);border:none;border-radius:var(--r);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;box-shadow:0 3px 10px rgba(200,56,10,0.2)}
+.scan-btn:disabled{opacity:0.5;cursor:not-allowed}
+.disconnect-btn{width:100%;padding:11px;background:none;border:2px solid var(--red);border-radius:var(--r);color:var(--red);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;margin-top:8px}
+.test-btn{width:100%;padding:11px;background:none;border:2px solid var(--border);border-radius:var(--r);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px;transition:all 0.2s}
+.test-btn:active{border-color:var(--accent);color:var(--accent)}
+.info-box{background:var(--card);border:2px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.info-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
+.info-row:last-child{margin-bottom:0}
+.info-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0}
+.info-text{font-size:13px;color:var(--muted);line-height:1.5;font-weight:700}
+
+/* Firebase setup card */
+.firebase-card{
+  background:var(--card);border:2px solid var(--gold);
+  border-radius:var(--r);padding:14px;margin-bottom:14px;
+  box-shadow:var(--shadow-sm);
+}
+.firebase-card h3{font-size:14px;font-weight:900;color:var(--gold);margin-bottom:8px}
+.firebase-card p{font-size:12px;color:var(--muted);line-height:1.6;font-weight:700;margin-bottom:6px}
+.firebase-card a{color:var(--accent);text-decoration:none;font-weight:900}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:80px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--text);color:#fff;
+  padding:10px 20px;border-radius:24px;
+  font-size:13px;font-weight:800;
+  opacity:0;transition:all 0.3s;
+  z-index:999;pointer-events:none;white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Receipt Modal */
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.70);
+  z-index:100;
+  display:none;align-items:flex-start;justify-content:center;
+  padding:16px;overflow-y:auto;
+}
+.modal-overlay.open{display:flex}
+.receipt{background:#fff;color:#1A1008;border-radius:6px;padding:20px;width:100%;max-width:300px;font-family:'Courier New',monospace;font-size:12px;line-height:1.6;margin-top:10px}
+.receipt-head{text-align:center;border-bottom:1px dashed #bbb;padding-bottom:10px;margin-bottom:10px}
+.receipt-title{font-size:16px;font-weight:700}
+.receipt-sub{font-size:10px;color:#666}
+.receipt-row{display:flex;justify-content:space-between;padding:2px 0}
+.receipt-divider{border:none;border-top:1px dashed #bbb;margin:8px 0}
+.receipt-total{font-weight:700;font-size:14px}
+.receipt-footer{text-align:center;margin-top:10px;font-size:10px;color:#888;border-top:1px dashed #bbb;padding-top:8px}
+.modal-actions{display:flex;gap:8px;margin-top:12px;width:100%;max-width:300px;padding-bottom:20px}
+.modal-btn{flex:1;padding:12px;border:none;border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer}
+.modal-close{background:var(--chip-bg);color:var(--muted);border:2px solid var(--border)}
+.modal-print{background:var(--accent);color:#fff}
+
+/* Empty state */
+.empty{text-align:center;padding:32px 20px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:10px;opacity:0.35}
+.empty-text{font-size:14px;font-weight:800}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- ===================== BILL SCREEN ===================== -->
+<div class="screen active" id="screen-bill">
+  <div class="header">
+    <div class="header-badge">Dilli Nihari House</div>
+    <div class="header-sub">Billing Counter</div>
+    <div class="sync-dot" id="sync-indicator-bill">
+      <div class="dot"></div>
+      <span id="sync-label-bill">SYNC</span>
+    </div>
+  </div>
+
+  <div class="settings-bar">
+    <div class="s-chip active-chip" onclick="showScreen('bill')">
+      <span class="chip-icon">🧾</span>
+      <span class="chip-label">New Bill</span>
+    </div>
+    <div class="s-divider"></div>
+    <div class="s-chip" onclick="showScreen('summary')">
+      <span class="chip-icon">📊</span>
+      <span class="chip-label">Sales</span>
+    </div>
+    <div class="s-chip" onclick="showScreen('menu')">
+      <span class="chip-icon">📋</span>
+      <span class="chip-label">Menu</span>
+    </div>
+    <div class="s-divider"></div>
+    <div class="s-chip" id="bt-chip-bill" onclick="showScreen('printer')">
+      <div class="dot" id="bt-dot-bill"></div>
+      <span class="chip-label" id="bt-label-bill">No Printer</span>
+    </div>
+  </div>
+
+  <div class="cat-bar" id="cat-bar-bill"></div>
+
+  <div class="bill-body">
+    <div class="section-label">Tap to add items</div>
+    <div class="menu-grid" id="menu-grid"></div>
+    <div class="order-section" id="order-section" style="display:none">
+      <div class="section-label">Order</div>
+      <div id="order-list"></div>
+    </div>
+    <div class="total-bar" id="total-bar" style="display:none">
+      <div>
+        <div class="total-label">Total Amount</div>
+        <div class="total-amt" id="total-display">₹0</div>
+      </div>
+      <div style="text-align:right">
+        <div class="stat-label" style="font-size:11px;color:var(--muted);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Items</div>
+        <div style="font-size:20px;color:var(--text);font-weight:900;font-family:'Baloo 2',cursive" id="items-count">0</div>
+      </div>
+    </div>
+    <button class="print-btn" id="print-btn" onclick="openReceipt()" style="display:none">🖨️ Print Receipt</button>
+    <button class="clear-btn" id="clear-btn" onclick="clearOrder()" style="display:none">Clear Order</button>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="showScreen('bill')"><span class="nav-icon">🧾</span>Bill</button>
+    <button class="nav-btn" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
+    <button class="nav-btn" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
+    <button class="nav-btn" onclick="showScreen('printer')"><span class="nav-icon">🖨️</span>Printer</button>
+  </div>
+</div>
+
+<!-- ===================== SUMMARY SCREEN ===================== -->
+<div class="screen" id="screen-summary">
+  <div class="header">
+    <div class="header-badge">Dilli Nihari House</div>
+    <div class="header-sub">Sales Report</div>
+    <div class="sync-dot" id="sync-indicator-summary">
+      <div class="dot"></div>
+      <span id="sync-label-summary">SYNC</span>
+    </div>
+  </div>
+  <div class="settings-bar">
+    <div class="s-chip" onclick="showScreen('bill')"><span class="chip-icon">🧾</span><span class="chip-label">New Bill</span></div>
+    <div class="s-divider"></div>
+    <div class="s-chip active-chip" onclick="showScreen('summary')"><span class="chip-icon">📊</span><span class="chip-label">Sales</span></div>
+    <div class="s-chip" onclick="showScreen('menu')"><span class="chip-icon">📋</span><span class="chip-label">Menu</span></div>
+    <div class="s-divider"></div>
+    <div class="s-chip" id="bt-chip-summary" onclick="showScreen('printer')">
+      <div class="dot" id="bt-dot-summary"></div>
+      <span class="chip-label" id="bt-label-summary">No Printer</span>
+    </div>
+  </div>
+  <div class="summary-body">
+    <div class="date-row">
+      <button class="date-btn active" onclick="setSummaryDate('today',this)">Today</button>
+      <button class="date-btn" onclick="setSummaryDate('week',this)">This Week</button>
+      <button class="date-btn" onclick="setSummaryDate('all',this)">All Time</button>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-val" id="rev-total">₹0</div><div class="stat-sub" id="rev-sub">0 bills</div></div>
+      <div class="stat-card"><div class="stat-label">Items Sold</div><div class="stat-val" id="items-sold">0</div><div class="stat-sub" id="items-sub">0 avg/bill</div></div>
+    </div>
+    <div class="section-label" style="margin-bottom:8px">Item Breakdown</div>
+    <div class="sales-list" id="sales-breakdown"></div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn" onclick="showScreen('bill')"><span class="nav-icon">🧾</span>Bill</button>
+    <button class="nav-btn active" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
+    <button class="nav-btn" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
+    <button class="nav-btn" onclick="showScreen('printer')"><span class="nav-icon">🖨️</span>Printer</button>
+  </div>
+</div>
+
+<!-- ===================== MENU SCREEN ===================== -->
+<div class="screen" id="screen-menu">
+  <div class="header">
+    <div class="header-badge">Dilli Nihari House</div>
+    <div class="header-sub">Menu Editor</div>
+    <div class="sync-dot" id="sync-indicator-menu">
+      <div class="dot"></div>
+      <span id="sync-label-menu">SYNC</span>
+    </div>
+  </div>
+  <div class="settings-bar">
+    <div class="s-chip" onclick="showScreen('bill')"><span class="chip-icon">🧾</span><span class="chip-label">New Bill</span></div>
+    <div class="s-divider"></div>
+    <div class="s-chip" onclick="showScreen('summary')"><span class="chip-icon">📊</span><span class="chip-label">Sales</span></div>
+    <div class="s-chip active-chip" onclick="showScreen('menu')"><span class="chip-icon">📋</span><span class="chip-label">Menu</span></div>
+    <div class="s-divider"></div>
+    <div class="s-chip" id="bt-chip-menu" onclick="showScreen('printer')">
+      <div class="dot" id="bt-dot-menu"></div>
+      <span class="chip-label" id="bt-label-menu">No Printer</span>
+    </div>
+  </div>
+  <div class="cat-bar" id="cat-bar-menu"></div>
+  <div class="menu-body">
+    <div id="menu-edit-list"></div>
+    <div class="add-item-form">
+      <div class="form-title">➕ Add New Item</div>
+      <div class="form-row">
+        <label class="form-label">Item Name</label>
+        <input class="form-input" id="new-name" placeholder="e.g. Nihari" type="text">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Category</label>
+        <input class="form-input" id="new-cat" placeholder="e.g. Main Course" type="text" list="cat-suggestions">
+        <datalist id="cat-suggestions"></datalist>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Price (₹)</label>
+        <input class="form-input" id="new-price" placeholder="e.g. 180" type="number" min="1" inputmode="numeric">
+      </div>
+      <button class="add-submit" onclick="addMenuItem()">+ Add to Menu</button>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn" onclick="showScreen('bill')"><span class="nav-icon">🧾</span>Bill</button>
+    <button class="nav-btn" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
+    <button class="nav-btn active" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
+    <button class="nav-btn" onclick="showScreen('printer')"><span class="nav-icon">🖨️</span>Printer</button>
+  </div>
+</div>
+
+<!-- ===================== PRINTER SCREEN ===================== -->
+<div class="screen" id="screen-printer">
+  <div class="header">
+    <div class="header-badge">Dilli Nihari House</div>
+    <div class="header-sub">Printer Setup</div>
+    <div class="sync-dot" id="sync-indicator-printer">
+      <div class="dot"></div>
+      <span id="sync-label-printer">SYNC</span>
+    </div>
+  </div>
+  <div class="settings-bar">
+    <div class="s-chip" onclick="showScreen('bill')"><span class="chip-icon">🧾</span><span class="chip-label">New Bill</span></div>
+    <div class="s-divider"></div>
+    <div class="s-chip" onclick="showScreen('summary')"><span class="chip-icon">📊</span><span class="chip-label">Sales</span></div>
+    <div class="s-chip" onclick="showScreen('menu')"><span class="chip-icon">📋</span><span class="chip-label">Menu</span></div>
+    <div class="s-divider"></div>
+    <div class="s-chip active-chip" id="bt-chip-printer" onclick="showScreen('printer')">
+      <div class="dot" id="bt-dot-printer"></div>
+      <span class="chip-label" id="bt-label-printer">Printer</span>
+    </div>
+  </div>
+  <div class="printer-body">
+
+    <!-- Firebase Setup Guide -->
+    <div class="firebase-card" id="firebase-setup-card">
+      <h3>☁️ Real-Time Sync Setup</h3>
+      <p>To enable automatic sync across all your devices:</p>
+      <p>1. Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a></p>
+      <p>2. Create a project → <strong>Realtime Database</strong> → Start in test mode</p>
+      <p>3. Project Settings → Your apps → Add Web App → Copy the config</p>
+      <p>4. Paste it at the top of this HTML file where it says <strong>YOUR_API_KEY</strong></p>
+      <p id="firebase-status" style="color:var(--green);font-weight:900;display:none">✓ Firebase connected! Sync is active.</p>
+    </div>
+
+    <div class="bt-status-card">
+      <div class="bt-icon-wrap" id="bt-icon-wrap">🖨️</div>
+      <div class="bt-status-title" id="bt-title">No Printer Connected</div>
+      <div class="bt-status-sub" id="bt-sub">Scan to find nearby Bluetooth thermal printers</div>
+      <button class="scan-btn" id="scan-btn" onclick="startScan()">🔍 Scan for Printers</button>
+      <button class="disconnect-btn" id="disconnect-btn" onclick="disconnectPrinter()" style="display:none">Disconnect Printer</button>
+    </div>
+    <div id="connected-actions" style="display:none">
+      <button class="test-btn" onclick="testPrint()">🧾 Print Test Page</button>
+    </div>
+    <div class="info-box">
+      <div class="section-label" style="margin-bottom:10px">Setup Guide</div>
+      <div class="info-row"><div class="info-dot"></div><div class="info-text">Turn on your thermal printer and enable Bluetooth.</div></div>
+      <div class="info-row"><div class="info-dot"></div><div class="info-text">Pair the printer once via Android Settings → Bluetooth before using this app.</div></div>
+      <div class="info-row"><div class="info-dot"></div><div class="info-text">Compatible with ESC/POS printers: Xprinter, GOOJPRT, Munbyn, RPP02, and most 58mm/80mm thermal printers.</div></div>
+      <div class="info-row"><div class="info-dot"></div><div class="info-text">Once connected, the printer is remembered automatically.</div></div>
+    </div>
+    <div id="bt-unsupported-box" style="display:none;background:#FFF0EE;border:2px solid var(--red);border-radius:var(--r);padding:14px;margin-bottom:14px">
+      <div style="font-size:13px;color:var(--red);margin-bottom:6px;font-weight:900">⚠️ Bluetooth Not Available</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6;font-weight:700">Web Bluetooth requires Chrome on Android. Bills are still saved offline and can be printed later.</div>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn" onclick="showScreen('bill')"><span class="nav-icon">🧾</span>Bill</button>
+    <button class="nav-btn" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
+    <button class="nav-btn" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
+    <button class="nav-btn active" onclick="showScreen('printer')"><span class="nav-icon">🖨️</span>Printer</button>
+  </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal-overlay" id="modal">
+  <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:300px">
+    <div class="receipt" id="receipt-content"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-close" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn modal-print" id="modal-print-btn" onclick="confirmPrint()">✓ Save & Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Item Modal -->
+<div class="edit-overlay" id="edit-modal">
+  <div class="edit-card">
+    <div class="edit-title">✏️ Edit Menu Item</div>
+    <div class="form-row">
+      <label class="form-label">Item Name</label>
+      <input class="form-input" id="edit-name" type="text">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Category</label>
+      <input class="form-input" id="edit-cat" type="text" list="cat-suggestions">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Price (₹)</label>
+      <input class="form-input" id="edit-price" type="number" min="1" inputmode="numeric">
+    </div>
+    <div class="edit-actions">
+      <button class="edit-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="edit-save" onclick="saveEditMenuItem()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────
+const DB_NAME='DilliNihari3';const DB_VER=1;
+let db,menu=[],order={},summaryMode='today';
+let btDevice=null,btChar=null,printerName='',isConnected=false;
+let activeBillCat='All',activeMenuCat='All';
+let editingItemId=null;
+let _isSyncingFromFirebase=false; // prevent loop when we write from remote change
+
+const MAX_QTY=990;
+
+// ─── IndexedDB (local fallback + source of truth for sales) ──
+function openDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('menu')) d.createObjectStore('menu',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('sales')) d.createObjectStore('sales',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('settings')) d.createObjectStore('settings',{keyPath:'key'});
+    };
+    req.onsuccess=e=>{db=e.target.result;res(db)};
+    req.onerror=()=>rej(req.error);
+  });
+}
+function dbGetAll(s){return new Promise((res,rej)=>{const tx=db.transaction(s,'readonly');const r=tx.objectStore(s).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function dbPut(s,o){return new Promise((res,rej)=>{const tx=db.transaction(s,'readwrite');const r=tx.objectStore(s).put(o);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function dbDelete(s,id){return new Promise((res,rej)=>{const tx=db.transaction(s,'readwrite');const r=tx.objectStore(s).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+function dbAdd(s,o){return new Promise((res,rej)=>{const tx=db.transaction(s,'readwrite');const r=tx.objectStore(s).add(o);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function dbGetOne(s,k){return new Promise((res)=>{const tx=db.transaction(s,'readonly');const r=tx.objectStore(s).get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)})}
+function dbClear(s){return new Promise((res,rej)=>{const tx=db.transaction(s,'readwrite');const r=tx.objectStore(s).clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+
+// ─── Firebase Real-Time Sync ──────────────────────────────────
+let fbReady=false;
+
+function setSyncStatus(status){
+  // status: 'ok' | 'err' | 'off'
+  ['bill','summary','menu','printer'].forEach(scr=>{
+    const el=document.getElementById('sync-indicator-'+scr);
+    const lbl=document.getElementById('sync-label-'+scr);
+    if(!el) return;
+    el.className='sync-dot'+(status==='ok'?' ok':status==='err'?' err':'');
+    if(lbl) lbl.textContent=status==='ok'?'LIVE':status==='err'?'OFFLINE':'SYNC';
+  });
+}
+
+async function initFirebase(){
+  // Wait for module to load
+  let tries=0;
+  while(!window._fb && tries<20){await new Promise(r=>setTimeout(r,100));tries++;}
+  if(!window._fb||!window._fb.enabled()){
+    setSyncStatus('off');
+    return;
+  }
+  const {ref,set,onValue,db}=window._fb;
+  fbReady=true;
+  setSyncStatus('ok');
+
+  // Show connected message on printer screen
+  const fstatus=document.getElementById('firebase-status');
+  if(fstatus) fstatus.style.display='block';
+
+  // ── MENU SYNC ──
+  // Push local menu to Firebase on first load, then listen for remote changes
+  const menuRef=ref(db(),'dilliNihari/menu');
+
+  // Listen for remote menu changes → update local
+  onValue(menuRef, async (snapshot)=>{
+    const remoteMenu=snapshot.val();
+    if(remoteMenu===null) {
+      // Firebase is empty, push local to remote
+      await pushMenuToFirebase();
+      return;
+    }
+    // Convert Firebase object to array
+    const incoming=Object.values(remoteMenu);
+    // Update local IndexedDB to match remote
+    await dbClear('menu');
+    for(const item of incoming){
+      await dbPut('menu',item);
+    }
+    menu=await dbGetAll('menu');
+    renderCategoryTabs();
+    renderMenu();
+    renderMenuEditor();
+  }, (error)=>{
+    setSyncStatus('err');
+    console.warn('Firebase sync error:',error);
+  });
+
+  // ── SALES SYNC ──
+  const salesRef=ref(db(),'dilliNihari/sales');
+  onValue(salesRef, async (snapshot)=>{
+    const remoteSales=snapshot.val();
+    if(remoteSales===null) {
+      await pushSalesToFirebase();
+      return;
+    }
+    const incoming=Object.values(remoteSales);
+    await dbClear('sales');
+    for(const sale of incoming){
+      await dbPut('sales',sale);
+    }
+    // Refresh summary if visible
+    const summaryScreen=document.getElementById('screen-summary');
+    if(summaryScreen&&summaryScreen.classList.contains('active')) loadSummary();
+  });
+}
+
+async function pushMenuToFirebase(){
+  if(!fbReady||!window._fb||!window._fb.enabled()) return;
+  const {ref,set,db}=window._fb;
+  const menuObj={};
+  menu.forEach(item=>{ menuObj[item.id]=item; });
+  try{
+    await set(ref(db(),'dilliNihari/menu'), menuObj);
+  } catch(e){ setSyncStatus('err'); }
+}
+
+async function pushSalesToFirebase(){
+  if(!fbReady||!window._fb||!window._fb.enabled()) return;
+  const {ref,set,db}=window._fb;
+  const all=await dbGetAll('sales');
+  const salesObj={};
+  all.forEach(s=>{ salesObj[s.id]=s; });
+  try{
+    await set(ref(db(),'dilliNihari/sales'), salesObj);
+  } catch(e){ setSyncStatus('err'); }
+}
+
+// ─── Init ────────────────────────────────────────────────────
+async function init(){
+  await openDB();
+  menu=await dbGetAll('menu');
+  const saved=await dbGetOne('settings','printer');
+  if(saved&&saved.name){printerName=saved.name;}
+  if(!navigator.bluetooth) document.getElementById('bt-unsupported-box').style.display='block';
+  updateAllChips();
+  renderCategoryTabs();
+  renderMenu();
+  renderMenuEditor();
+  // Start Firebase sync after local data is loaded
+  initFirebase();
+}
+
+// ─── Screens ─────────────────────────────────────────────────
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const navMap={bill:0,summary:1,menu:2,printer:3};
+  document.querySelectorAll('#screen-'+name+' .nav-btn')[navMap[name]]&&
+    document.querySelectorAll('#screen-'+name+' .nav-btn')[navMap[name]].classList.add('active');
+  if(name==='summary') loadSummary();
+  if(name==='menu'){renderCategoryTabs();renderMenuEditor();}
+  if(name==='printer') refreshPrinterUI();
+  if(name==='bill'){renderCategoryTabs();renderMenu();}
+}
+
+// ─── Categories ──────────────────────────────────────────────
+function getCategories(){
+  const cats=['All'];
+  menu.forEach(item=>{
+    const c=(item.category||'Uncategorised').trim();
+    if(!cats.includes(c)) cats.push(c);
+  });
+  return cats;
+}
+
+function renderCategoryTabs(){
+  const cats=getCategories();
+  const billBar=document.getElementById('cat-bar-bill');
+  if(billBar){
+    billBar.innerHTML='';
+    cats.forEach(cat=>{
+      const btn=document.createElement('button');
+      btn.className='cat-tab'+(activeBillCat===cat?' active':'');
+      btn.textContent=cat;
+      btn.onclick=()=>{activeBillCat=cat;renderCategoryTabs();renderMenu();};
+      billBar.appendChild(btn);
+    });
+  }
+  const menuBar=document.getElementById('cat-bar-menu');
+  if(menuBar){
+    menuBar.innerHTML='';
+    cats.forEach(cat=>{
+      const btn=document.createElement('button');
+      btn.className='cat-tab'+(activeMenuCat===cat?' active':'');
+      btn.textContent=cat;
+      btn.onclick=()=>{activeMenuCat=cat;renderCategoryTabs();renderMenuEditor();};
+      menuBar.appendChild(btn);
+    });
+  }
+  const dl=document.getElementById('cat-suggestions');
+  if(dl){
+    dl.innerHTML='';
+    cats.filter(c=>c!=='All').forEach(c=>{
+      const opt=document.createElement('option');opt.value=c;dl.appendChild(opt);
+    });
+  }
+}
+
+// ─── Bill / Menu render ──────────────────────────────────────
+function renderMenu(){
+  const grid=document.getElementById('menu-grid');
+  if(!grid) return;
+  grid.innerHTML='';
+  const filtered=activeBillCat==='All'?menu:menu.filter(m=>(m.category||'Uncategorised')===activeBillCat);
+  if(filtered.length===0){
+    grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🍽️</div><div class="empty-text">No items in this category</div></div>';
+    return;
+  }
+  filtered.forEach(item=>{
+    const qty=order[item.id]||0;
+    const div=document.createElement('div');
+    div.className='menu-item';
+    div.onclick=()=>addToOrder(item.id);
+    const catTag=item.category?`<div class="item-cat-tag">${item.category}</div>`:'';
+    div.innerHTML=`${catTag}<div class="item-name">${item.name}</div><div class="item-price">₹${item.price}</div>${qty>0?`<div class="item-qty-badge">${qty}</div>`:''}`;
+    grid.appendChild(div);
+  });
+}
+
+function addToOrder(id){
+  const cur=order[id]||0;
+  if(cur>=MAX_QTY){showToast('⚠️ Max 990 per item');return;}
+  order[id]=cur+1;
+  renderMenu();renderOrder();
+}
+
+function changeQty(id,delta){
+  const cur=order[id]||0;
+  const next=cur+delta;
+  if(next<=0){ delete order[id]; }
+  else if(next>MAX_QTY){ showToast('⚠️ Max 990 per item'); return; }
+  else { order[id]=next; }
+  renderMenu();renderOrder();
+}
+
+function setQtyDirect(id,val){
+  const n=parseInt(val);
+  if(isNaN(n)||n<=0){ delete order[id]; }
+  else { order[id]=Math.min(n,MAX_QTY); }
+  renderMenu();renderOrder();
+}
+
+function renderOrder(){
+  const keys=Object.keys(order).map(Number);
+  const section=document.getElementById('order-section');
+  const totalBar=document.getElementById('total-bar');
+  const printBtn=document.getElementById('print-btn');
+  const clearBtn=document.getElementById('clear-btn');
+  const list=document.getElementById('order-list');
+  if(keys.length===0){
+    section.style.display='none';totalBar.style.display='none';
+    printBtn.style.display='none';clearBtn.style.display='none';
+    return;
+  }
+  section.style.display='block';totalBar.style.display='flex';
+  printBtn.style.display='flex';clearBtn.style.display='block';
+  let total=0,itemCount=0;list.innerHTML='';
+  keys.forEach(id=>{
+    const item=menu.find(m=>m.id===id);if(!item) return;
+    const qty=order[id];const sub=item.price*qty;total+=sub;itemCount+=qty;
+    const row=document.createElement('div');row.className='order-row';
+    row.innerHTML=`
+      <div class="order-name">${item.name}</div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty(${id},-1)">−</button>
+        <input
+          class="qty-input"
+          type="number"
+          min="0"
+          max="${MAX_QTY}"
+          inputmode="numeric"
+          value="${qty}"
+          onchange="setQtyDirect(${id},this.value)"
+          oninput="if(parseInt(this.value)>${MAX_QTY}) this.value=${MAX_QTY}"
+        >
+        <button class="qty-btn" onclick="changeQty(${id},1)">+</button>
+      </div>
+      <div class="order-subtotal">₹${sub}</div>`;
+    list.appendChild(row);
+  });
+  document.getElementById('total-display').textContent='₹'+total;
+  document.getElementById('items-count').textContent=itemCount;
+}
+
+function clearOrder(){order={};renderMenu();renderOrder();}
+
+// ─── Receipt ─────────────────────────────────────────────────
+function openReceipt(){
+  const keys=Object.keys(order).map(Number);if(keys.length===0) return;
+  let lines='';let total=0;
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const timeStr=now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  const billNo=Math.floor(Math.random()*9000)+1000;
+  const orderItems=[];
+  keys.forEach(id=>{
+    const item=menu.find(m=>m.id===id);if(!item) return;
+    const qty=order[id];const sub=item.price*qty;total+=sub;
+    orderItems.push({name:item.name,price:item.price,qty});
+    lines+=`<div class="receipt-row"><span>${item.name} ×${qty}</span><span>₹${sub}</span></div>`;
+  });
+  window._pendingItems=orderItems;window._pendingTotal=total;
+  const pStatus=isConnected&&btChar
+    ?'<span style="color:#2D6B3A;font-size:10px">● Printer Ready — will print now</span>'
+    :'<span style="color:#C00;font-size:10px">● No printer — bill will be saved only</span>';
+  document.getElementById('receipt-content').innerHTML=`
+    <div class="receipt-head">
+      <div class="receipt-title">Dilli Nihari House</div>
+      <div class="receipt-sub">Authentic Delhi Cuisine</div>
+      <div class="receipt-sub">${dateStr} | ${timeStr}</div>
+      <div class="receipt-sub">Bill No: #${billNo}</div>
+      <div style="margin-top:6px">${pStatus}</div>
+    </div>
+    ${lines}
+    <hr class="receipt-divider">
+    <div class="receipt-row receipt-total"><span>TOTAL</span><span>₹${total}</span></div>
+    <div class="receipt-footer">Thank you for dining with us!<br>Visit Again 🌟</div>`;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+
+async function confirmPrint(){
+  const items=window._pendingItems||[];
+  const total=window._pendingTotal||0;
+  const now=new Date();
+  const saleId=await dbAdd('sales',{date:now.toISOString().slice(0,10),timestamp:now.getTime(),items,total});
+  closeModal();
+  // Sync new sale to Firebase
+  await pushSalesToFirebase();
+  if(isConnected&&btChar){
+    showToast('🖨️ Sending to printer…');
+    const ok=await sendToPrinter(buildESCPOS(items,total));
+    if(ok) showToast('✓ Printed & saved!');
+  } else {
+    showToast('✓ Bill saved!');
+  }
+  clearOrder();
+}
+
+// ─── Summary ─────────────────────────────────────────────────
+async function loadSummary(){
+  const all=await dbGetAll('sales');
+  const now=new Date();const todayKey=now.toISOString().slice(0,10);
+  const weekAgo=new Date(now.getTime()-7*86400000).toISOString().slice(0,10);
+  let filtered=all;
+  if(summaryMode==='today') filtered=all.filter(s=>s.date===todayKey);
+  else if(summaryMode==='week') filtered=all.filter(s=>s.date>=weekAgo);
+  const revenue=filtered.reduce((a,s)=>a+s.total,0);
+  const bills=filtered.length;
+  const itemMap={};let totalItems=0;
+  filtered.forEach(s=>{(s.items||[]).forEach(it=>{if(!itemMap[it.name]) itemMap[it.name]={qty:0,rev:0};itemMap[it.name].qty+=it.qty;itemMap[it.name].rev+=it.price*it.qty;totalItems+=it.qty;});});
+  document.getElementById('rev-total').textContent='₹'+revenue.toLocaleString('en-IN');
+  document.getElementById('rev-sub').textContent=bills+' bill'+(bills!==1?'s':'');
+  document.getElementById('items-sold').textContent=totalItems;
+  document.getElementById('items-sub').textContent=(bills>0?Math.round(totalItems/bills):0)+' avg/bill';
+  const breakdown=document.getElementById('sales-breakdown');
+  const sorted=Object.entries(itemMap).sort((a,b)=>b[1].qty-a[1].qty);
+  if(sorted.length===0){breakdown.innerHTML='<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">No sales yet for this period</div></div>';return;}
+  breakdown.innerHTML=sorted.map(([name,data])=>`<div class="sales-item"><div class="sales-dot"></div><div class="sales-name">${name}</div><div class="sales-count">${data.qty}</div><div class="sales-revenue">₹${data.rev.toLocaleString('en-IN')}</div></div>`).join('');
+}
+
+function setSummaryDate(mode,btn){
+  summaryMode=mode;document.querySelectorAll('.date-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadSummary();
+}
+
+// ─── Menu Editor ─────────────────────────────────────────────
+function renderMenuEditor(){
+  const list=document.getElementById('menu-edit-list');
+  if(!list) return;
+  const filtered=activeMenuCat==='All'?menu:menu.filter(m=>(m.category||'Uncategorised')===activeMenuCat);
+  if(filtered.length===0){
+    list.innerHTML='<div class="empty"><div class="empty-icon">🍽️</div><div class="empty-text">No items yet. Add one below!</div></div>';
+    return;
+  }
+  list.innerHTML=filtered.map(item=>`
+    <div class="menu-edit-item">
+      <div class="menu-edit-left">
+        <div class="menu-edit-cat">${item.category||'Uncategorised'}</div>
+        <div class="menu-edit-name">${item.name}</div>
+      </div>
+      <div class="menu-edit-price">₹${item.price}</div>
+      <button class="icon-btn edit" onclick="openEditModal(${item.id})" title="Edit">✏️</button>
+      <button class="icon-btn del" onclick="deleteMenuItem(${item.id})" title="Delete">🗑️</button>
+    </div>`).join('');
+}
+
+async function addMenuItem(){
+  const name=document.getElementById('new-name').value.trim();
+  const cat=document.getElementById('new-cat').value.trim()||'Uncategorised';
+  const price=parseInt(document.getElementById('new-price').value);
+  if(!name||isNaN(price)||price<=0){showToast('⚠️ Enter valid name & price');return;}
+  await dbAdd('menu',{name,category:cat,price});
+  menu=await dbGetAll('menu');
+  document.getElementById('new-name').value='';
+  document.getElementById('new-cat').value='';
+  document.getElementById('new-price').value='';
+  renderCategoryTabs();renderMenuEditor();renderMenu();
+  // Sync to Firebase
+  await pushMenuToFirebase();
+  showToast('✓ '+name+' added!');
+}
+
+async function deleteMenuItem(id){
+  if(!confirm('Delete this item from the menu?')) return;
+  await dbDelete('menu',id);menu=await dbGetAll('menu');
+  if(order[id]) delete order[id];
+  const cats=getCategories();
+  if(!cats.includes(activeBillCat)) activeBillCat='All';
+  if(!cats.includes(activeMenuCat)) activeMenuCat='All';
+  renderCategoryTabs();renderMenuEditor();renderMenu();renderOrder();
+  // Sync to Firebase
+  await pushMenuToFirebase();
+  showToast('Item removed');
+}
+
+function openEditModal(id){
+  const item=menu.find(m=>m.id===id);if(!item) return;
+  editingItemId=id;
+  document.getElementById('edit-name').value=item.name;
+  document.getElementById('edit-cat').value=item.category||'';
+  document.getElementById('edit-price').value=item.price;
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('open');editingItemId=null;}
+
+async function saveEditMenuItem(){
+  if(!editingItemId) return;
+  const name=document.getElementById('edit-name').value.trim();
+  const cat=document.getElementById('edit-cat').value.trim()||'Uncategorised';
+  const price=parseInt(document.getElementById('edit-price').value);
+  if(!name||isNaN(price)||price<=0){showToast('⚠️ Enter valid name & price');return;}
+  await dbPut('menu',{id:editingItemId,name,category:cat,price});
+  menu=await dbGetAll('menu');
+  closeEditModal();
+  renderCategoryTabs();renderMenuEditor();renderMenu();
+  // Sync to Firebase
+  await pushMenuToFirebase();
+  showToast('✓ Item updated!');
+}
+
+// ─── Toast ───────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ─── Printer / Bluetooth ─────────────────────────────────────
+function updateAllChips(){
+  ['bill','summary','menu','printer'].forEach(scr=>{
+    const chip=document.getElementById('bt-chip-'+scr);
+    const dot=document.getElementById('bt-dot-'+scr);
+    const lbl=document.getElementById('bt-label-'+scr);
+    if(!chip) return;
+    if(isConnected){
+      chip.classList.add('printer-ok');
+      if(dot){dot.style.background='var(--green)';}
+      if(lbl){lbl.textContent=printerName||'Connected';lbl.style.color='var(--green)';}
+    } else if(printerName){
+      chip.classList.remove('printer-ok');
+      if(dot){dot.style.background='var(--gold)';}
+      if(lbl){lbl.textContent=printerName;lbl.style.color='var(--gold)';}
+    } else {
+      chip.classList.remove('printer-ok');
+      if(dot){dot.style.background='var(--muted)';}
+      if(lbl){lbl.textContent='No Printer';lbl.style.color='var(--muted)';}
+    }
+  });
+}
+
+function refreshPrinterUI(){
+  const wrap=document.getElementById('bt-icon-wrap');
+  const title=document.getElementById('bt-title');
+  const sub=document.getElementById('bt-sub');
+  const scanBtn=document.getElementById('scan-btn');
+  const discBtn=document.getElementById('disconnect-btn');
+  const connActions=document.getElementById('connected-actions');
+  if(isConnected&&btChar){
+    wrap.className='bt-icon-wrap connected';
+    title.textContent='Printer Connected';
+    sub.textContent=printerName||'Bluetooth Thermal Printer';
+    sub.className='bt-status-sub ok';
+    scanBtn.textContent='🔍 Scan Again';
+    discBtn.style.display='block';
+    connActions.style.display='block';
+  } else if(printerName&&!isConnected){
+    wrap.className='bt-icon-wrap';
+    title.textContent='Printer Saved (Offline)';
+    sub.textContent=printerName+' — not in range';
+    sub.className='bt-status-sub';
+    scanBtn.textContent='🔍 Reconnect Printer';
+    discBtn.style.display='block';
+    connActions.style.display='none';
+  } else {
+    wrap.className='bt-icon-wrap';
+    title.textContent='No Printer Connected';
+    sub.textContent='Scan to find nearby Bluetooth thermal printers';
+    sub.className='bt-status-sub';
+    scanBtn.textContent='🔍 Scan for Printers';
+    discBtn.style.display='none';
+    connActions.style.display='none';
+  }
+}
+
+async function startScan(){
+  if(!navigator.bluetooth){showToast('⚠️ Web Bluetooth not supported in this browser');return;}
+  const scanBtn=document.getElementById('scan-btn');
+  const wrap=document.getElementById('bt-icon-wrap');
+  scanBtn.disabled=true;scanBtn.textContent='Scanning…';
+  wrap.className='bt-icon-wrap scanning';
+  try{
+    const device=await navigator.bluetooth.requestDevice({
+      filters:[
+        {services:['000018f0-0000-1000-8000-00805f9b34fb']},
+        {namePrefix:'Printer'},{namePrefix:'printer'},{namePrefix:'RPP'},{namePrefix:'MTP'},
+        {namePrefix:'XP'},{namePrefix:'Xprinter'},{namePrefix:'GOOJPRT'},{namePrefix:'Munbyn'},{namePrefix:'BT'},
+      ],
+      optionalServices:['000018f0-0000-1000-8000-00805f9b34fb','e7810a71-73ae-499d-8c15-faa9aef0c3f2']
+    });
+    await connectDevice(device);
+  } catch(e){
+    if(e.name!=='NotFoundError') showToast('⚠️ '+e.message);
+    wrap.className='bt-icon-wrap';
+    scanBtn.disabled=false;scanBtn.textContent='🔍 Scan for Printers';
+    refreshPrinterUI();
+  }
+}
+
+async function connectDevice(device){
+  const scanBtn=document.getElementById('scan-btn');
+  const wrap=document.getElementById('bt-icon-wrap');
+  try{
+    showToast('Connecting to '+device.name+'…');
+    const server=await device.gatt.connect();
+    let service,char;
+    try{service=await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');char=await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');}
+    catch{try{service=await server.getPrimaryService('e7810a71-73ae-499d-8c15-faa9aef0c3f2');char=await service.getCharacteristic('bef8d6c9-9c21-4c9e-b632-bd58c1009f9f');}
+    catch{const svcs=await server.getPrimaryServices();service=svcs[0];const chars=await service.getCharacteristics();char=chars.find(c=>c.properties.write||c.properties.writeWithoutResponse)||chars[0];}}
+    btDevice=device;btChar=char;isConnected=true;
+    printerName=device.name||'BT Printer';
+    await dbPut('settings',{key:'printer',name:printerName});
+    device.addEventListener('gattserverdisconnected',onDisconnected);
+    updateAllChips();refreshPrinterUI();
+    showToast('✓ Connected to '+printerName);
+  } catch(e){
+    showToast('⚠️ Connection failed: '+e.message);
+    wrap.className='bt-icon-wrap';isConnected=false;
+  }
+  scanBtn.disabled=false;scanBtn.textContent='🔍 Scan for Printers';
+}
+
+function onDisconnected(){btChar=null;isConnected=false;updateAllChips();showToast('Printer disconnected');refreshPrinterUI();}
+
+function disconnectPrinter(){
+  if(btDevice&&btDevice.gatt.connected) btDevice.gatt.disconnect();
+  btDevice=null;btChar=null;isConnected=false;printerName='';
+  dbPut('settings',{key:'printer',name:''});
+  updateAllChips();refreshPrinterUI();
+  showToast('Printer removed');
+}
+
+function textToBytes(text){const b=[];for(let i=0;i<text.length;i++){const c=text.charCodeAt(i);b.push(c<128?c:0x3F);}return b;}
+function buildESCPOS(items,total){
+  const ESC=0x1B,GS=0x1D,LF=0x0A;
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const timeStr=now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  const billNo=Math.floor(Math.random()*9000)+1000;
+  const b=[];
+  b.push(ESC,0x40,ESC,0x61,0x01,ESC,0x21,0x30);
+  b.push(...textToBytes('Dilli Nihari House'),LF);
+  b.push(ESC,0x21,0x00,...textToBytes('Authentic Delhi Cuisine'),LF);
+  b.push(...textToBytes(dateStr+' | '+timeStr),LF);
+  b.push(...textToBytes('Bill No: #'+billNo),LF);
+  b.push(...textToBytes('--------------------------------'),LF,ESC,0x61,0x00);
+  items.forEach(it=>{
+    const n=it.name.slice(0,16).padEnd(16,' ');
+    const q=(it.qty+'x').padStart(3,' ');
+    const p=('Rs.'+it.price*it.qty).padStart(9,' ');
+    b.push(...textToBytes(n+q+p),LF);
+  });
+  b.push(...textToBytes('--------------------------------'),LF,ESC,0x61,0x01,ESC,0x21,0x10);
+  b.push(...textToBytes('TOTAL: Rs.'+total),LF,ESC,0x21,0x00);
+  b.push(...textToBytes('Thank you for dining with us!'),LF,...textToBytes('Visit Again!'),LF,LF,LF);
+  b.push(GS,0x56,0x41,0x10);
+  return new Uint8Array(b);
+}
+
+async function sendToPrinter(data){
+  if(!btChar) return false;
+  try{
+    const CHUNK=512;
+    for(let i=0;i<data.length;i+=CHUNK){
+      const chunk=data.slice(i,i+CHUNK);
+      if(btChar.properties.writeWithoutResponse) await btChar.writeValueWithoutResponse(chunk);
+      else await btChar.writeValue(chunk);
+      await new Promise(r=>setTimeout(r,60));
+    }
+    return true;
+  } catch(e){showToast('⚠️ Print error: '+e.message);return false;}
+}
+
+async function testPrint(){
+  const data=buildESCPOS([{name:'Test Item',price:99,qty:1}],99);
+  const ok=await sendToPrinter(data);
+  if(ok) showToast('✓ Test page sent!');
+}
+
+init();
+</script>
+</body>
+</html>
