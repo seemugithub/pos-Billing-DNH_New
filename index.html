@@ -4,7 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Dilli Nihari House</title>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<!-- Abadi is a system font; Nunito kept as fallback for devices without Abadi -->
+<style>
+@font-face {
+  font-family: 'Abadi';
+  src: local('Abadi'), local('AbadI MT'), local('Abadi MT Condensed'), local('Abadi MT');
+  font-weight: normal;
+}
+</style>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -44,29 +52,31 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#F5F1EB;
+  --bg:#F3F0F8;
   --surface:#FFFFFF;
   --card:#FFFFFF;
-  --accent:#C8380A;
-  --gold:#B8760A;
+  --accent:#5B2D8E;
+  --accent2:#7B3FB8;
+  --gold:#F5C300;
+  --yellow:#FFD700;
   --red:#C8380A;
   --red2:#A52C08;
   --green:#1A6B35;
-  --text:#1A1008;
-  --muted:#7A6048;
-  --border:#D8C8A8;
-  --border2:#E8D8B8;
-  --chip-bg:#EDE6D8;
-  --highlight:#FFF3E0;
+  --text:#2A1A40;
+  --muted:#7A6A9A;
+  --border:#D8C8F0;
+  --border2:#E8D8FF;
+  --chip-bg:#EDE8F8;
+  --highlight:#FFF8D0;
   --r:14px;
   --r-sm:9px;
-  --shadow:0 2px 10px rgba(80,40,0,0.10);
-  --shadow-sm:0 1px 4px rgba(80,40,0,0.08);
+  --shadow:0 2px 10px rgba(60,20,100,0.12);
+  --shadow-sm:0 1px 4px rgba(60,20,100,0.08);
 }
 body{
   background:var(--bg);
   color:var(--text);
-  font-family:'Nunito',sans-serif;
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans','Gill Sans MT',Arial,sans-serif;
   font-weight:700;
   min-height:100vh;
   max-width:430px;
@@ -82,20 +92,21 @@ body{
   padding:13px 16px 10px;
   text-align:center;
   flex-shrink:0;
-  box-shadow:0 2px 8px rgba(180,40,0,0.2);
+  box-shadow:0 2px 8px rgba(60,20,100,0.30);
   position:relative;
 }
 .header-badge{
-  font-family:'Baloo 2',cursive;
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
   font-size:22px;
   font-weight:800;
-  color:#fff;
+  color:var(--yellow);
   letter-spacing:0.3px;
   line-height:1.2;
+  text-shadow:0 1px 4px rgba(0,0,0,0.18);
 }
 .header-sub{
   font-size:11px;
-  color:rgba(255,255,255,0.78);
+  color:rgba(255,220,0,0.82);
   letter-spacing:2px;
   text-transform:uppercase;
   margin-top:1px;
@@ -113,7 +124,7 @@ body{
 }
 .sync-dot.ok .dot{background:#4AE08A;box-shadow:0 0 5px #4AE08A88;}
 .sync-dot.err .dot{background:#FF6B6B;}
-.sync-dot span{font-size:9px;color:rgba(255,255,255,0.7);font-weight:800;letter-spacing:0.5px;text-transform:uppercase;}
+.sync-dot span{font-size:9px;color:rgba(255,220,0,0.85);font-weight:800;letter-spacing:0.5px;text-transform:uppercase;}
 
 /* Settings/nav bar */
 .settings-bar{
@@ -138,7 +149,7 @@ body{
   white-space:nowrap;
 }
 .s-chip:active{border-color:var(--accent);background:var(--highlight)}
-.s-chip.active-chip{border-color:var(--accent);background:var(--highlight);box-shadow:0 1px 5px rgba(200,56,10,0.15)}
+.s-chip.active-chip{border-color:var(--accent);background:var(--highlight);box-shadow:0 1px 5px rgba(91,45,142,0.18)}
 .s-chip.printer-ok{border-color:var(--green);background:#E8F5EC}
 .s-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background 0.3s;flex-shrink:0}
 .s-chip.printer-ok .dot{background:var(--green)}
@@ -165,7 +176,7 @@ body{
   border:2px solid var(--border);
   background:var(--chip-bg);
   color:var(--muted);
-  font-family:'Nunito',sans-serif;
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
   font-size:13px;
   font-weight:800;
   cursor:pointer;
@@ -176,14 +187,14 @@ body{
 .cat-tab.active{
   background:var(--accent);
   border-color:var(--accent);
-  color:#fff;
-  box-shadow:0 2px 8px rgba(200,56,10,0.25);
+  color:var(--yellow);
+  box-shadow:0 2px 8px rgba(91,45,142,0.25);
 }
 .cat-tab:active{transform:scale(0.95)}
 
 /* Bottom nav */
-.nav{display:flex;background:var(--surface);border-top:2px solid var(--border);flex-shrink:0;box-shadow:0 -2px 8px rgba(80,40,0,0.07)}
-.nav-btn{flex:1;padding:10px 4px 8px;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:color 0.2s}
+.nav{display:flex;background:var(--surface);border-top:2px solid var(--border);flex-shrink:0;box-shadow:0 -2px 8px rgba(60,20,100,0.10)}
+.nav-btn{flex:1;padding:10px 4px 8px;background:none;border:none;color:var(--muted);font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:11px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:color 0.2s}
 .nav-btn.active{color:var(--accent)}
 .nav-icon{font-size:20px}
 
@@ -216,14 +227,14 @@ body{
   text-transform:uppercase;
 }
 .item-name{font-size:14px;font-weight:800;color:var(--text);line-height:1.3}
-.item-price{font-size:16px;font-weight:900;color:var(--accent);margin-top:4px;font-family:'Baloo 2',cursive}
+.item-price{font-size:16px;font-weight:900;color:var(--accent);margin-top:4px;font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif}
 .item-qty-badge{
   position:absolute;top:6px;right:6px;
   background:var(--accent);color:#fff;
   border-radius:50%;width:22px;height:22px;
   font-size:12px;font-weight:900;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 2px 5px rgba(200,56,10,0.3);
+  box-shadow:0 2px 5px rgba(91,45,142,0.3);
 }
 .order-section{
   background:var(--card);
@@ -258,7 +269,7 @@ body{
   border:2px solid var(--border);
   border-radius:var(--r-sm);
   background:var(--bg);
-  font-family:'Nunito',sans-serif;
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
   padding:2px 4px;
   outline:none;
   -moz-appearance:textfield;
@@ -278,28 +289,29 @@ body{
   box-shadow:var(--shadow-sm);
 }
 .total-label{font-size:13px;color:var(--muted);font-weight:800}
-.total-amt{font-family:'Baloo 2',cursive;font-size:30px;font-weight:800;color:var(--accent)}
+.total-amt{font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:30px;font-weight:800;color:var(--accent)}
 .print-btn{
   width:100%;padding:15px;
   background:var(--accent);
   border:none;border-radius:var(--r);
-  color:#fff;
-  font-family:'Nunito',sans-serif;
+  color:var(--yellow);
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
   font-size:17px;font-weight:900;
   cursor:pointer;
   display:flex;align-items:center;justify-content:center;gap:8px;
   transition:all 0.2s;
   margin-bottom:8px;
-  box-shadow:0 3px 12px rgba(200,56,10,0.25);
+  box-shadow:0 3px 12px rgba(91,45,142,0.25);
+  text-shadow:0 1px 3px rgba(0,0,0,0.12);
 }
-.print-btn:active{transform:scale(0.98);background:var(--red2)}
+.print-btn:active{transform:scale(0.98);background:var(--accent2)}
 .clear-btn{
   width:100%;padding:11px;
   background:none;
   border:2px solid var(--border);
   border-radius:var(--r);
   color:var(--muted);
-  font-family:'Nunito',sans-serif;
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
   font-size:14px;font-weight:800;
   cursor:pointer;transition:all 0.2s;margin-bottom:14px;
 }
@@ -314,7 +326,7 @@ body{
   box-shadow:var(--shadow-sm);
 }
 .stat-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;font-weight:800}
-.stat-val{font-family:'Baloo 2',cursive;font-size:26px;font-weight:800;color:var(--accent)}
+.stat-val{font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:26px;font-weight:800;color:var(--accent)}
 .stat-sub{font-size:12px;color:var(--muted);margin-top:3px;font-weight:700}
 .sales-list{background:var(--card);border:2px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm)}
 .sales-item{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border2)}
@@ -328,7 +340,7 @@ body{
   flex:1;padding:9px;
   background:var(--card);border:2px solid var(--border);
   border-radius:var(--r-sm);color:var(--muted);
-  font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:12px;font-weight:800;
   cursor:pointer;transition:all 0.2s;
 }
 .date-btn.active{border-color:var(--accent);color:var(--accent);background:var(--highlight)}
@@ -347,7 +359,7 @@ body{
 .menu-edit-left{flex:1;min-width:0}
 .menu-edit-cat{font-size:10px;font-weight:800;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px}
 .menu-edit-name{font-size:15px;font-weight:800;color:var(--text)}
-.menu-edit-price{font-size:16px;font-weight:900;color:var(--accent);font-family:'Baloo 2',cursive;margin-left:4px;flex-shrink:0}
+.menu-edit-price{font-size:16px;font-weight:900;color:var(--accent);font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;margin-left:4px;flex-shrink:0}
 .icon-btn{
   width:34px;height:34px;
   background:var(--chip-bg);
@@ -379,7 +391,7 @@ body{
   border:2px solid var(--border);
   border-radius:var(--r-sm);
   color:var(--text);
-  font-family:'Nunito',sans-serif;
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
   font-size:15px;font-weight:700;
   outline:none;
   transition:border-color 0.2s;
@@ -390,8 +402,8 @@ body{
   width:100%;padding:12px;
   background:var(--accent);
   border:none;border-radius:var(--r-sm);
-  color:#fff;
-  font-family:'Nunito',sans-serif;
+  color:var(--yellow);
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
   font-size:15px;font-weight:900;
   cursor:pointer;
   transition:all 0.15s;
@@ -416,8 +428,8 @@ body{
 }
 .edit-title{font-size:16px;font-weight:900;color:var(--text);margin-bottom:14px}
 .edit-actions{display:flex;gap:8px;margin-top:14px}
-.edit-cancel{flex:1;padding:11px;background:var(--chip-bg);border:2px solid var(--border);border-radius:var(--r-sm);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
-.edit-save{flex:2;padding:11px;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer}
+.edit-cancel{flex:1;padding:11px;background:var(--chip-bg);border:2px solid var(--border);border-radius:var(--r-sm);color:var(--muted);font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:14px;font-weight:800;cursor:pointer}
+.edit-save{flex:2;padding:11px;background:var(--accent);border:none;border-radius:var(--r-sm);color:var(--yellow);font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:14px;font-weight:900;cursor:pointer}
 
 /* Printer screen */
 .printer-body{flex:1;overflow-y:auto;padding:16px;background:var(--bg)}
@@ -425,14 +437,14 @@ body{
 .bt-icon-wrap{width:64px;height:64px;border-radius:50%;background:var(--chip-bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;transition:all 0.4s}
 .bt-icon-wrap.connected{border-color:var(--green);background:#E8F5EC}
 .bt-icon-wrap.scanning{border-color:var(--accent);animation:pulse 1.2s infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(200,56,10,0.3)}50%{box-shadow:0 0 0 10px rgba(200,56,10,0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(91,45,142,0.3)}50%{box-shadow:0 0 0 10px rgba(91,45,142,0)}}
 .bt-status-title{font-size:15px;font-weight:900;color:var(--text);margin-bottom:4px}
 .bt-status-sub{font-size:12px;color:var(--muted);font-weight:700}
 .bt-status-sub.ok{color:var(--green)}
-.scan-btn{width:100%;padding:13px;background:var(--accent);border:none;border-radius:var(--r);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;box-shadow:0 3px 10px rgba(200,56,10,0.2)}
+.scan-btn{width:100%;padding:13px;background:var(--accent);border:none;border-radius:var(--r);color:var(--yellow);font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:15px;font-weight:900;cursor:pointer;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;box-shadow:0 3px 10px rgba(91,45,142,0.2)}
 .scan-btn:disabled{opacity:0.5;cursor:not-allowed}
-.disconnect-btn{width:100%;padding:11px;background:none;border:2px solid var(--red);border-radius:var(--r);color:var(--red);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;margin-top:8px}
-.test-btn{width:100%;padding:11px;background:none;border:2px solid var(--border);border-radius:var(--r);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px;transition:all 0.2s}
+.disconnect-btn{width:100%;padding:11px;background:none;border:2px solid var(--red);border-radius:var(--r);color:var(--red);font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:13px;font-weight:800;cursor:pointer;margin-top:8px}
+.test-btn{width:100%;padding:11px;background:none;border:2px solid var(--border);border-radius:var(--r);color:var(--muted);font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px;transition:all 0.2s}
 .test-btn:active{border-color:var(--accent);color:var(--accent)}
 .info-box{background:var(--card);border:2px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
 .info-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
@@ -481,9 +493,9 @@ body{
 .receipt-total{font-weight:700;font-size:14px}
 .receipt-footer{text-align:center;margin-top:10px;font-size:10px;color:#888;border-top:1px dashed #bbb;padding-top:8px}
 .modal-actions{display:flex;gap:8px;margin-top:12px;width:100%;max-width:300px;padding-bottom:20px}
-.modal-btn{flex:1;padding:12px;border:none;border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer}
+.modal-btn{flex:1;padding:12px;border:none;border-radius:var(--r-sm);font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:14px;font-weight:900;cursor:pointer}
 .modal-close{background:var(--chip-bg);color:var(--muted);border:2px solid var(--border)}
-.modal-print{background:var(--accent);color:#fff}
+.modal-print{background:var(--accent);color:var(--yellow)}
 
 /* Empty state */
 .empty{text-align:center;padding:32px 20px;color:var(--muted)}
@@ -493,6 +505,133 @@ body{
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── Report Tab Styles ── */
+.rpt-tabs{
+  display:flex;gap:6px;margin-bottom:12px;
+  background:var(--surface);border:2px solid var(--border);
+  border-radius:var(--r);padding:5px;
+}
+.rpt-tab{
+  flex:1;padding:7px 4px;border:none;border-radius:var(--r-sm);
+  background:transparent;color:var(--muted);
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:11px;font-weight:800;
+  cursor:pointer;transition:all 0.18s;white-space:nowrap;
+}
+.rpt-tab.active{
+  background:var(--accent);color:var(--yellow);
+  box-shadow:0 2px 8px rgba(91,45,142,0.25);
+}
+
+/* ── Filter Card ── */
+.filter-card{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:var(--r);padding:13px;margin-bottom:12px;
+  box-shadow:var(--shadow-sm);
+}
+.filter-row{display:flex;gap:8px;margin-bottom:10px}
+.filter-group{flex:1;min-width:0}
+.filter-label{display:block;font-size:10px;color:var(--muted);
+  letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:800}
+.filter-input{
+  width:100%;padding:8px 10px;
+  background:var(--bg);border:2px solid var(--border);
+  border-radius:var(--r-sm);color:var(--text);
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:13px;font-weight:700;
+  outline:none;transition:border-color 0.2s;
+}
+.filter-input:focus{border-color:var(--accent)}
+.filter-apply-btn{
+  width:100%;padding:10px;background:var(--accent);
+  border:none;border-radius:var(--r-sm);color:var(--yellow);
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:14px;font-weight:900;
+  cursor:pointer;transition:all 0.15s;
+}
+.filter-apply-btn:active{background:var(--red2)}
+
+/* ── Download Button ── */
+.dl-btn{
+  padding:6px 13px;background:var(--green);border:none;
+  border-radius:20px;color:#fff;
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:12px;font-weight:800;
+  cursor:pointer;transition:all 0.15s;
+  box-shadow:0 2px 6px rgba(26,107,53,0.2);white-space:nowrap;
+}
+.dl-btn:active{opacity:0.8}
+
+/* ── Date-wise rows ── */
+.dw-row{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:var(--r-sm);padding:12px 14px;
+  margin-bottom:8px;box-shadow:var(--shadow-sm);
+}
+.dw-date{font-size:13px;font-weight:900;color:var(--text);margin-bottom:6px}
+.dw-stats{display:flex;gap:14px}
+.dw-stat{font-size:12px;color:var(--muted);font-weight:700}
+.dw-stat strong{color:var(--accent);font-weight:900}
+.dw-items{margin-top:7px;border-top:1px solid var(--border2);padding-top:7px}
+.dw-item-line{display:flex;justify-content:space-between;font-size:12px;
+  color:var(--muted);font-weight:700;padding:2px 0}
+
+/* ── Category-wise rows ── */
+.cw-row{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:var(--r-sm);padding:12px 14px;
+  margin-bottom:8px;box-shadow:var(--shadow-sm);
+}
+.cw-cat{font-size:13px;font-weight:900;color:var(--accent);margin-bottom:6px;
+  display:flex;align-items:center;gap:6px}
+.cw-cat-badge{
+  font-size:10px;background:var(--highlight);border:1px solid var(--accent);
+  border-radius:10px;padding:1px 8px;color:var(--accent);font-weight:800;
+}
+.cw-items{margin-top:4px}
+.cw-item-line{display:flex;justify-content:space-between;font-size:12px;
+  color:var(--muted);font-weight:700;padding:3px 0;border-bottom:1px solid var(--border2)}
+.cw-item-line:last-child{border-bottom:none}
+.cw-total-line{
+  display:flex;justify-content:space-between;font-size:13px;
+  font-weight:900;color:var(--text);margin-top:7px;
+  border-top:1px solid var(--border2);padding-top:7px;
+}
+.item-add-hint{
+  font-size:10px;color:var(--muted);font-weight:700;
+  margin-top:5px;letter-spacing:0.3px;opacity:0.7;
+}
+.menu-item.item-in-order{
+  border-color:var(--accent);
+  background:var(--highlight);
+  box-shadow:0 2px 10px rgba(91,45,142,0.15);
+}
+.card-qty-ctrl{
+  display:flex;align-items:center;gap:0;
+  margin-top:7px;
+  background:var(--surface);
+  border:2px solid var(--accent);
+  border-radius:20px;
+  overflow:hidden;
+  height:30px;
+}
+.card-qty-btn{
+  width:30px;height:100%;
+  background:none;border:none;
+  color:var(--accent);font-size:18px;font-weight:900;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background 0.12s;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.card-qty-btn:active{background:var(--accent);color:#fff;}
+.card-qty-plus{border-left:1px solid var(--border2);}
+.card-qty-btn:first-child{border-right:1px solid var(--border2);}
+.card-qty-input{
+  flex:1;width:0;min-width:0;text-align:center;
+  border:none;background:transparent;
+  color:var(--text);font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
+  font-size:14px;font-weight:900;outline:none;
+  -moz-appearance:textfield;padding:0;
+}
+.card-qty-input::-webkit-outer-spin-button,
+.card-qty-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 </style>
 </head>
 <body>
@@ -545,7 +684,7 @@ body{
       </div>
       <div style="text-align:right">
         <div class="stat-label" style="font-size:11px;color:var(--muted);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Items</div>
-        <div style="font-size:20px;color:var(--text);font-weight:900;font-family:'Baloo 2',cursive" id="items-count">0</div>
+        <div style="font-size:20px;color:var(--text);font-weight:900;font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif" id="items-count">0</div>
       </div>
     </div>
     <button class="print-btn" id="print-btn" onclick="openReceipt()" style="display:none">🖨️ Print Receipt</button>
@@ -582,17 +721,77 @@ body{
     </div>
   </div>
   <div class="summary-body">
-    <div class="date-row">
-      <button class="date-btn active" onclick="setSummaryDate('today',this)">Today</button>
-      <button class="date-btn" onclick="setSummaryDate('week',this)">This Week</button>
-      <button class="date-btn" onclick="setSummaryDate('all',this)">All Time</button>
+
+    <!-- Report Type Tabs -->
+    <div class="rpt-tabs">
+      <button class="rpt-tab active" id="tab-overview" onclick="switchReportTab('overview',this)">📊 Overview</button>
+      <button class="rpt-tab" id="tab-datewise" onclick="switchReportTab('datewise',this)">📅 Date-Wise</button>
+      <button class="rpt-tab" id="tab-catwise" onclick="switchReportTab('catwise',this)">🏷️ Category</button>
     </div>
-    <div class="stat-row">
-      <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-val" id="rev-total">₹0</div><div class="stat-sub" id="rev-sub">0 bills</div></div>
-      <div class="stat-card"><div class="stat-label">Items Sold</div><div class="stat-val" id="items-sold">0</div><div class="stat-sub" id="items-sub">0 avg/bill</div></div>
+
+    <!-- ── OVERVIEW PANEL ── -->
+    <div id="panel-overview">
+      <div class="date-row">
+        <button class="date-btn active" id="qbtn-today" onclick="setQuickDate('today',this)">Today</button>
+        <button class="date-btn" id="qbtn-week" onclick="setQuickDate('week',this)">This Week</button>
+        <button class="date-btn" id="qbtn-month" onclick="setQuickDate('month',this)">This Month</button>
+        <button class="date-btn" id="qbtn-all" onclick="setQuickDate('all',this)">All Time</button>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-val" id="rev-total">₹0</div><div class="stat-sub" id="rev-sub">0 bills</div></div>
+        <div class="stat-card"><div class="stat-label">Items Sold</div><div class="stat-val" id="items-sold">0</div><div class="stat-sub" id="items-sub">0 avg/bill</div></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="section-label" style="margin-bottom:0">Item Breakdown</div>
+        <button class="dl-btn" onclick="downloadOverviewExcel()">⬇ Excel</button>
+      </div>
+      <div class="sales-list" id="sales-breakdown"></div>
     </div>
-    <div class="section-label" style="margin-bottom:8px">Item Breakdown</div>
-    <div class="sales-list" id="sales-breakdown"></div>
+
+    <!-- ── DATE-WISE PANEL ── -->
+    <div id="panel-datewise" style="display:none">
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label class="filter-label">From Date</label>
+            <input type="date" class="filter-input" id="dw-from">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">To Date</label>
+            <input type="date" class="filter-input" id="dw-to">
+          </div>
+        </div>
+        <button class="filter-apply-btn" onclick="applyDateWise()">Apply Filter</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="section-label" style="margin-bottom:0">Daily Sales</div>
+        <button class="dl-btn" onclick="downloadDateWiseExcel()">⬇ Excel</button>
+      </div>
+      <div id="datewise-list"></div>
+    </div>
+
+    <!-- ── CATEGORY-WISE PANEL ── -->
+    <div id="panel-catwise" style="display:none">
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label class="filter-label">From Date</label>
+            <input type="date" class="filter-input" id="cw-from">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">To Date</label>
+            <input type="date" class="filter-input" id="cw-to">
+          </div>
+        </div>
+        <button class="filter-apply-btn" onclick="applyCatWise()">Apply Filter</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="section-label" style="margin-bottom:0">Category Breakdown</div>
+        <button class="dl-btn" onclick="downloadCatWiseExcel()">⬇ Excel</button>
+      </div>
+      <div id="catwise-list"></div>
+    </div>
+
   </div>
   <div class="nav">
     <button class="nav-btn" onclick="showScreen('bill')"><span class="nav-icon">🧾</span>Bill</button>
@@ -905,7 +1104,7 @@ function showScreen(name){
   const navMap={bill:0,summary:1,menu:2,printer:3};
   document.querySelectorAll('#screen-'+name+' .nav-btn')[navMap[name]]&&
     document.querySelectorAll('#screen-'+name+' .nav-btn')[navMap[name]].classList.add('active');
-  if(name==='summary') loadSummary();
+  if(name==='summary'){initDateDefaults();loadSummary();}
   if(name==='menu'){renderCategoryTabs();renderMenuEditor();}
   if(name==='printer') refreshPrinterUI();
   if(name==='bill'){renderCategoryTabs();renderMenu();}
@@ -967,10 +1166,34 @@ function renderMenu(){
   filtered.forEach(item=>{
     const qty=order[item.id]||0;
     const div=document.createElement('div');
-    div.className='menu-item';
-    div.onclick=()=>addToOrder(item.id);
+    div.className='menu-item'+(qty>0?' item-in-order':'');
     const catTag=item.category?`<div class="item-cat-tag">${item.category}</div>`:'';
-    div.innerHTML=`${catTag}<div class="item-name">${item.name}</div><div class="item-price">₹${item.price}</div>${qty>0?`<div class="item-qty-badge">${qty}</div>`:''}`;
+    if(qty>0){
+      div.innerHTML=`
+        ${catTag}
+        <div class="item-name">${item.name}</div>
+        <div class="item-price">₹${item.price}</div>
+        <div class="card-qty-ctrl" onclick="event.stopPropagation()">
+          <button class="card-qty-btn" onclick="cardChangeQty(${item.id},-1)">−</button>
+          <input
+            class="card-qty-input"
+            type="number" min="0" max="${MAX_QTY}"
+            inputmode="numeric"
+            value="${qty}"
+            onchange="cardSetQty(${item.id},this.value)"
+            oninput="if(parseInt(this.value)>${MAX_QTY}) this.value=${MAX_QTY}"
+            onclick="this.select()"
+          >
+          <button class="card-qty-btn card-qty-plus" onclick="cardChangeQty(${item.id},1)">+</button>
+        </div>`;
+    } else {
+      div.onclick=()=>addToOrder(item.id);
+      div.innerHTML=`
+        ${catTag}
+        <div class="item-name">${item.name}</div>
+        <div class="item-price">₹${item.price}</div>
+        <div class="item-add-hint">Tap to add</div>`;
+    }
     grid.appendChild(div);
   });
 }
@@ -979,6 +1202,22 @@ function addToOrder(id){
   const cur=order[id]||0;
   if(cur>=MAX_QTY){showToast('⚠️ Max 990 per item');return;}
   order[id]=cur+1;
+  renderMenu();renderOrder();
+}
+
+function cardChangeQty(id,delta){
+  const cur=order[id]||0;
+  const next=cur+delta;
+  if(next<=0){ delete order[id]; }
+  else if(next>MAX_QTY){ showToast('⚠️ Max 990 per item'); return; }
+  else { order[id]=next; }
+  renderMenu();renderOrder();
+}
+
+function cardSetQty(id,val){
+  const n=parseInt(val);
+  if(isNaN(n)||n<=0){ delete order[id]; }
+  else { order[id]=Math.min(n,MAX_QTY); }
   renderMenu();renderOrder();
 }
 
@@ -1096,17 +1335,52 @@ async function confirmPrint(){
 }
 
 // ─── Summary ─────────────────────────────────────────────────
+let activeReportTab='overview';
+
+function switchReportTab(tab,btn){
+  activeReportTab=tab;
+  document.querySelectorAll('.rpt-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['overview','datewise','catwise'].forEach(p=>{
+    document.getElementById('panel-'+p).style.display=(p===tab?'block':'none');
+  });
+  if(tab==='overview') loadSummary();
+  else if(tab==='datewise') applyDateWise();
+  else if(tab==='catwise') applyCatWise();
+}
+
+// ── Shared date helpers ──
+function todayKey(){return new Date().toISOString().slice(0,10);}
+function fmtDate(d){
+  const [y,m,day]=d.split('-');
+  const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return day+' '+names[parseInt(m)-1]+' '+y;
+}
+function initDateDefaults(){
+  const today=todayKey();
+  ['dw-from','dw-to','cw-from','cw-to'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&!el.value) el.value=today;
+  });
+}
+
+// ── Overview ──
 async function loadSummary(){
   const all=await dbGetAll('sales');
-  const now=new Date();const todayKey=now.toISOString().slice(0,10);
+  const now=new Date();const today=todayKey();
   const weekAgo=new Date(now.getTime()-7*86400000).toISOString().slice(0,10);
+  const monthAgo=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
   let filtered=all;
-  if(summaryMode==='today') filtered=all.filter(s=>s.date===todayKey);
+  if(summaryMode==='today') filtered=all.filter(s=>s.date===today);
   else if(summaryMode==='week') filtered=all.filter(s=>s.date>=weekAgo);
+  else if(summaryMode==='month') filtered=all.filter(s=>s.date>=monthAgo);
   const revenue=filtered.reduce((a,s)=>a+s.total,0);
   const bills=filtered.length;
   const itemMap={};let totalItems=0;
-  filtered.forEach(s=>{(s.items||[]).forEach(it=>{if(!itemMap[it.name]) itemMap[it.name]={qty:0,rev:0};itemMap[it.name].qty+=it.qty;itemMap[it.name].rev+=it.price*it.qty;totalItems+=it.qty;});});
+  filtered.forEach(s=>{(s.items||[]).forEach(it=>{
+    if(!itemMap[it.name]) itemMap[it.name]={qty:0,rev:0};
+    itemMap[it.name].qty+=it.qty;itemMap[it.name].rev+=it.price*it.qty;totalItems+=it.qty;
+  });});
   document.getElementById('rev-total').textContent='₹'+revenue.toLocaleString('en-IN');
   document.getElementById('rev-sub').textContent=bills+' bill'+(bills!==1?'s':'');
   document.getElementById('items-sold').textContent=totalItems;
@@ -1115,10 +1389,153 @@ async function loadSummary(){
   const sorted=Object.entries(itemMap).sort((a,b)=>b[1].qty-a[1].qty);
   if(sorted.length===0){breakdown.innerHTML='<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">No sales yet for this period</div></div>';return;}
   breakdown.innerHTML=sorted.map(([name,data])=>`<div class="sales-item"><div class="sales-dot"></div><div class="sales-name">${name}</div><div class="sales-count">${data.qty}</div><div class="sales-revenue">₹${data.rev.toLocaleString('en-IN')}</div></div>`).join('');
+  window._overviewData={sorted,revenue,bills,totalItems,mode:summaryMode};
 }
 
-function setSummaryDate(mode,btn){
-  summaryMode=mode;document.querySelectorAll('.date-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadSummary();
+function setQuickDate(mode,btn){
+  summaryMode=mode;
+  document.querySelectorAll('#panel-overview .date-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');loadSummary();
+}
+// Legacy compat
+function setSummaryDate(mode,btn){setQuickDate(mode,btn);}
+
+// ── Date-Wise Report ──
+async function applyDateWise(){
+  const from=document.getElementById('dw-from').value;
+  const to=document.getElementById('dw-to').value;
+  const container=document.getElementById('datewise-list');
+  if(!from||!to){container.innerHTML='<div class="empty"><div class="empty-icon">📅</div><div class="empty-text">Select date range</div></div>';return;}
+  if(from>to){showToast('⚠️ From date must be before To date');return;}
+  const all=await dbGetAll('sales');
+  const filtered=all.filter(s=>s.date>=from&&s.date<=to);
+  // Group by date
+  const dateMap={};
+  filtered.forEach(s=>{
+    if(!dateMap[s.date]) dateMap[s.date]={bills:0,revenue:0,itemMap:{}};
+    dateMap[s.date].bills++;
+    dateMap[s.date].revenue+=s.total;
+    (s.items||[]).forEach(it=>{
+      const n=it.name;
+      if(!dateMap[s.date].itemMap[n]) dateMap[s.date].itemMap[n]={qty:0,rev:0};
+      dateMap[s.date].itemMap[n].qty+=it.qty;
+      dateMap[s.date].itemMap[n].rev+=it.price*it.qty;
+    });
+  });
+  const dates=Object.keys(dateMap).sort((a,b)=>b.localeCompare(a));
+  window._dateWiseData={dateMap,dates,from,to};
+  if(dates.length===0){container.innerHTML='<div class="empty"><div class="empty-icon">📅</div><div class="empty-text">No sales in this date range</div></div>';return;}
+  container.innerHTML=dates.map(d=>{
+    const day=dateMap[d];
+    const topItems=Object.entries(day.itemMap).sort((a,b)=>b[1].qty-a[1].qty).slice(0,4);
+    return `<div class="dw-row">
+      <div class="dw-date">📅 ${fmtDate(d)}</div>
+      <div class="dw-stats">
+        <div class="dw-stat"><strong>₹${day.revenue.toLocaleString('en-IN')}</strong> revenue</div>
+        <div class="dw-stat"><strong>${day.bills}</strong> bill${day.bills!==1?'s':''}</div>
+      </div>
+      <div class="dw-items">${topItems.map(([name,data])=>`<div class="dw-item-line"><span>${name}</span><span>${data.qty} × ₹${data.rev.toLocaleString('en-IN')}</span></div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Category-Wise Report ──
+async function applyCatWise(){
+  const from=document.getElementById('cw-from').value;
+  const to=document.getElementById('cw-to').value;
+  const container=document.getElementById('catwise-list');
+  if(!from||!to){container.innerHTML='<div class="empty"><div class="empty-icon">🏷️</div><div class="empty-text">Select date range</div></div>';return;}
+  if(from>to){showToast('⚠️ From date must be before To date');return;}
+  const all=await dbGetAll('sales');
+  const filtered=all.filter(s=>s.date>=from&&s.date<=to);
+  // Build item→category map from current menu
+  const menuCatMap={};
+  menu.forEach(m=>menuCatMap[m.name]=(m.category||'Uncategorised'));
+  // Group by category
+  const catMap={};
+  filtered.forEach(s=>{
+    (s.items||[]).forEach(it=>{
+      const cat=menuCatMap[it.name]||'Uncategorised';
+      if(!catMap[cat]) catMap[cat]={items:{},revenue:0,qty:0};
+      if(!catMap[cat].items[it.name]) catMap[cat].items[it.name]={qty:0,rev:0};
+      catMap[cat].items[it.name].qty+=it.qty;
+      catMap[cat].items[it.name].rev+=it.price*it.qty;
+      catMap[cat].revenue+=it.price*it.qty;
+      catMap[cat].qty+=it.qty;
+    });
+  });
+  window._catWiseData={catMap,from,to};
+  const cats=Object.keys(catMap).sort((a,b)=>catMap[b].revenue-catMap[a].revenue);
+  if(cats.length===0){container.innerHTML='<div class="empty"><div class="empty-icon">🏷️</div><div class="empty-text">No sales in this date range</div></div>';return;}
+  container.innerHTML=cats.map(cat=>{
+    const c=catMap[cat];
+    const items=Object.entries(c.items).sort((a,b)=>b[1].rev-a[1].rev);
+    return `<div class="cw-row">
+      <div class="cw-cat">🏷️ ${cat} <span class="cw-cat-badge">${c.qty} items</span></div>
+      <div class="cw-items">${items.map(([name,data])=>`<div class="cw-item-line"><span>${name}</span><span>${data.qty} qty &nbsp; ₹${data.rev.toLocaleString('en-IN')}</span></div>`).join('')}</div>
+      <div class="cw-total-line"><span>Category Total</span><span>₹${c.revenue.toLocaleString('en-IN')}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ── Excel Downloads ──
+function makeCSV(headers,rows){
+  const escape=v=>{
+    const s=String(v??'');
+    return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;
+  };
+  return [headers.map(escape).join(','),...rows.map(r=>r.map(escape).join(','))].join('\n');
+}
+function downloadCSV(csv,filename){
+  const BOM='\uFEFF'; // UTF-8 BOM for Excel
+  const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✓ Excel file downloaded!');
+}
+
+function downloadOverviewExcel(){
+  const d=window._overviewData;
+  if(!d||!d.sorted||d.sorted.length===0){showToast('⚠️ No data to download');return;}
+  const modeLabel=d.mode==='today'?'Today':d.mode==='week'?'This Week':d.mode==='month'?'This Month':'All Time';
+  const rows=d.sorted.map(([name,data])=>[name,data.qty,data.rev]);
+  rows.push(['','','']);
+  rows.push(['TOTAL',d.totalItems,d.revenue]);
+  const csv=makeCSV(['Item Name','Qty Sold','Revenue (₹)'],rows);
+  downloadCSV(csv,`DNH_Overview_${modeLabel.replace(/ /g,'_')}_${todayKey()}.csv`);
+}
+
+function downloadDateWiseExcel(){
+  const d=window._dateWiseData;
+  if(!d||!d.dates||d.dates.length===0){showToast('⚠️ No data to download');return;}
+  const rows=[];
+  d.dates.forEach(date=>{
+    const day=d.dateMap[date];
+    rows.push([fmtDate(date),'','',day.bills,day.revenue]);
+    Object.entries(day.itemMap).sort((a,b)=>b[1].qty-a[1].qty).forEach(([name,data])=>{
+      rows.push(['',name,data.qty,'',data.rev]);
+    });
+    rows.push(['','','','','']);
+  });
+  const csv=makeCSV(['Date','Item','Item Qty','Bills','Revenue (₹)'],rows);
+  downloadCSV(csv,`DNH_DateWise_${d.from}_to_${d.to}.csv`);
+}
+
+function downloadCatWiseExcel(){
+  const d=window._catWiseData;
+  if(!d||!d.catMap||Object.keys(d.catMap).length===0){showToast('⚠️ No data to download');return;}
+  const rows=[];
+  Object.entries(d.catMap).sort((a,b)=>b[1].revenue-a[1].revenue).forEach(([cat,c])=>{
+    rows.push([cat,'','',c.qty,c.revenue]);
+    Object.entries(c.items).sort((a,b)=>b[1].rev-a[1].rev).forEach(([name,data])=>{
+      rows.push(['',name,data.qty,'',data.rev]);
+    });
+    rows.push(['','','','','']);
+  });
+  const csv=makeCSV(['Category','Item','Item Qty','Total Items','Revenue (₹)'],rows);
+  downloadCSV(csv,`DNH_CategoryWise_${d.from}_to_${d.to}.csv`);
 }
 
 // ─── Menu Editor ─────────────────────────────────────────────
