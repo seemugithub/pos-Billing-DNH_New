@@ -731,6 +731,7 @@ body{
 
     <!-- ── OVERVIEW PANEL ── -->
     <div id="panel-overview">
+      <div style="font-size:11px;color:var(--muted);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;text-align:center" id="today-label"></div>
       <div class="date-row">
         <button class="date-btn active" id="qbtn-today" onclick="setQuickDate('today',this)">Today</button>
         <button class="date-btn" id="qbtn-week" onclick="setQuickDate('week',this)">This Week</button>
@@ -1320,7 +1321,9 @@ async function confirmPrint(){
   const items=window._pendingItems||[];
   const total=window._pendingTotal||0;
   const now=new Date();
-  const saleId=await dbAdd('sales',{date:now.toISOString().slice(0,10),timestamp:now.getTime(),items,total});
+  // FIXED: use local date so sale is stored against correct IST date
+  const localDate=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const saleId=await dbAdd('sales',{date:localDate,timestamp:now.getTime(),items,total});
   closeModal();
   // Sync new sale to Firebase
   await pushSalesToFirebase();
@@ -1345,12 +1348,19 @@ function switchReportTab(tab,btn){
     document.getElementById('panel-'+p).style.display=(p===tab?'block':'none');
   });
   if(tab==='overview') loadSummary();
-  else if(tab==='datewise') applyDateWise();
-  else if(tab==='catwise') applyCatWise();
+  else if(tab==='datewise'){initDateDefaults();applyDateWise();}
+  else if(tab==='catwise'){initDateDefaults();applyCatWise();}
 }
 
 // ── Shared date helpers ──
-function todayKey(){return new Date().toISOString().slice(0,10);}
+// FIXED: use local date (not UTC) so midnight resets at IST midnight, not UTC midnight
+function todayKey(){
+  const now=new Date();
+  const y=now.getFullYear();
+  const m=String(now.getMonth()+1).padStart(2,'0');
+  const d=String(now.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+d;
+}
 function fmtDate(d){
   const [y,m,day]=d.split('-');
   const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1358,18 +1368,31 @@ function fmtDate(d){
 }
 function initDateDefaults(){
   const today=todayKey();
-  ['dw-from','dw-to','cw-from','cw-to'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el&&!el.value) el.value=today;
-  });
+  // For date-wise: default from = 7 days ago, to = today (shows history automatically)
+  const sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-6);
+  const weekStart=sevenDaysAgo.getFullYear()+'-'+String(sevenDaysAgo.getMonth()+1).padStart(2,'0')+'-'+String(sevenDaysAgo.getDate()).padStart(2,'0');
+  const dwFrom=document.getElementById('dw-from');
+  const dwTo=document.getElementById('dw-to');
+  if(dwFrom&&!dwFrom.value){dwFrom.value=weekStart;}
+  if(dwTo&&!dwTo.value){dwTo.value=today;}
+  // For category-wise: default to today
+  const cwFrom=document.getElementById('cw-from');
+  const cwTo=document.getElementById('cw-to');
+  if(cwFrom&&!cwFrom.value){cwFrom.value=today;}
+  if(cwTo&&!cwTo.value){cwTo.value=today;}
 }
 
 // ── Overview ──
 async function loadSummary(){
+  // Show today's date so user can confirm the date reset is working
+  const todayLabel=document.getElementById('today-label');
+  if(todayLabel) todayLabel.textContent='📅 Today: '+fmtDate(todayKey());
   const all=await dbGetAll('sales');
   const now=new Date();const today=todayKey();
-  const weekAgo=new Date(now.getTime()-7*86400000).toISOString().slice(0,10);
-  const monthAgo=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
+  // FIXED: use local date arithmetic for week/month boundaries
+  const weekAgoDate=new Date(now);weekAgoDate.setDate(weekAgoDate.getDate()-7);
+  const weekAgo=weekAgoDate.getFullYear()+'-'+String(weekAgoDate.getMonth()+1).padStart(2,'0')+'-'+String(weekAgoDate.getDate()).padStart(2,'0');
+  const monthAgo=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
   let filtered=all;
   if(summaryMode==='today') filtered=all.filter(s=>s.date===today);
   else if(summaryMode==='week') filtered=all.filter(s=>s.date>=weekAgo);
