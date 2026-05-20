@@ -793,6 +793,34 @@ body{
       <div id="catwise-list"></div>
     </div>
 
+    <!-- ── AUTO REPORT CARD ── -->
+    <div style="margin-top:14px;background:var(--card);border:2px solid var(--accent);border-radius:var(--r);padding:14px;box-shadow:var(--shadow-sm)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:900;color:var(--accent)">⏰ Auto Daily Report</div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+          <span style="font-size:11px;color:var(--muted);font-weight:800" id="auto-report-toggle-label">OFF</span>
+          <div id="auto-report-toggle" onclick="toggleAutoReport()" style="width:40px;height:22px;border-radius:11px;background:var(--border);position:relative;cursor:pointer;transition:background 0.3s">
+            <div id="auto-report-thumb" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left 0.3s;box-shadow:0 1px 4px rgba(0,0,0,0.2)"></div>
+          </div>
+        </label>
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:10px;line-height:1.6">
+        Sends today's sales report at <strong style="color:var(--accent)">11:53 PM</strong> every night.<br>Keep the app open in browser for this to work.
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="shareReportWhatsApp()" style="flex:1;padding:10px 6px;background:#25D366;border:none;border-radius:var(--r-sm);color:#fff;font-family:inherit;font-size:13px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+          <span>📱</span> WhatsApp
+        </button>
+        <button onclick="shareReportGmail()" style="flex:1;padding:10px 6px;background:#EA4335;border:none;border-radius:var(--r-sm);color:#fff;font-family:inherit;font-size:13px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+          <span>📧</span> Gmail
+        </button>
+        <button onclick="shareReportNative()" style="flex:1;padding:10px 6px;background:var(--accent);border:none;border-radius:var(--r-sm);color:var(--yellow);font-family:inherit;font-size:13px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+          <span>↗️</span> Share
+        </button>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--muted);font-weight:700;text-align:center" id="auto-report-next"></div>
+    </div>
+
   </div>
   <div class="nav">
     <button class="nav-btn" onclick="showScreen('bill')"><span class="nav-icon">🧾</span>Bill</button>
@@ -1803,7 +1831,144 @@ async function testPrint(){
   if(ok) showToast('✓ Test page sent!');
 }
 
+// ─── Daily Auto Report ───────────────────────────────────────
+let autoReportEnabled = false;
+let autoReportTimer = null;
+const AUTO_REPORT_HOUR = 23;
+const AUTO_REPORT_MIN  = 53;
+
+async function buildDailyReportText() {
+  const all = await dbGetAll('sales');
+  const today = todayKey();
+  const filtered = all.filter(s => s.date === today);
+  const revenue = filtered.reduce((a, s) => a + s.total, 0);
+  const bills = filtered.length;
+  const itemMap = {};
+  let totalItems = 0;
+  filtered.forEach(s => {
+    (s.items || []).forEach(it => {
+      if (!itemMap[it.name]) itemMap[it.name] = { qty: 0, rev: 0 };
+      itemMap[it.name].qty += it.qty;
+      itemMap[it.name].rev += it.price * it.qty;
+      totalItems += it.qty;
+    });
+  });
+  const sorted = Object.entries(itemMap).sort((a, b) => b[1].qty - a[1].qty);
+  const dateLabel = fmtDate(today);
+  let lines = `🍽️ *Dilli Nihari House*\n📅 Daily Sales Report — ${dateLabel}\n`;
+  lines += `${'─'.repeat(28)}\n`;
+  lines += `💰 Total Revenue : ₹${revenue.toLocaleString('en-IN')}\n`;
+  lines += `🧾 Total Bills    : ${bills}\n`;
+  lines += `📦 Items Sold     : ${totalItems}\n`;
+  if (bills > 0) lines += `📊 Avg / Bill     : ₹${Math.round(revenue / bills).toLocaleString('en-IN')}\n`;
+  lines += `${'─'.repeat(28)}\n`;
+  lines += `*Item Breakdown:*\n`;
+  if (sorted.length === 0) {
+    lines += `No sales today.\n`;
+  } else {
+    sorted.forEach(([name, data]) => {
+      lines += `• ${name}: ${data.qty} qty — ₹${data.rev.toLocaleString('en-IN')}\n`;
+    });
+  }
+  lines += `${'─'.repeat(28)}\n`;
+  lines += `_Report sent at 11:53 PM automatically_`;
+  return lines;
+}
+
+async function shareReportWhatsApp(auto = false) {
+  const text = await buildDailyReportText();
+  const url = 'https://wa.me/?text=' + encodeURIComponent(text);
+  window.open(url, '_blank');
+  if (auto) showToast('📱 WhatsApp report opened!');
+}
+
+async function shareReportGmail(auto = false) {
+  const text = await buildDailyReportText();
+  const today = fmtDate(todayKey());
+  const subject = encodeURIComponent(`DNH Daily Sales Report — ${today}`);
+  const body = encodeURIComponent(text);
+  window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank');
+  if (auto) showToast('📧 Gmail report opened!');
+}
+
+async function shareReportNative(auto = false) {
+  const text = await buildDailyReportText();
+  const today = fmtDate(todayKey());
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `DNH Sales — ${today}`, text });
+      if (auto) showToast('✓ Report shared!');
+    } catch (e) {
+      if (e.name !== 'AbortError') showToast('Share cancelled');
+    }
+  } else {
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('✓ Report copied to clipboard!');
+    } catch {
+      showToast('⚠️ Share not supported on this browser');
+    }
+  }
+}
+
+function updateAutoReportUI() {
+  const toggle = document.getElementById('auto-report-toggle');
+  const thumb  = document.getElementById('auto-report-thumb');
+  const label  = document.getElementById('auto-report-toggle-label');
+  const next   = document.getElementById('auto-report-next');
+  if (!toggle) return;
+  if (autoReportEnabled) {
+    toggle.style.background = 'var(--accent)';
+    thumb.style.left = '20px';
+    label.textContent = 'ON';
+    label.style.color = 'var(--accent)';
+    if (next) next.textContent = '⏰ Report will send at 11:53 PM tonight';
+  } else {
+    toggle.style.background = 'var(--border)';
+    thumb.style.left = '2px';
+    label.textContent = 'OFF';
+    label.style.color = 'var(--muted)';
+    if (next) next.textContent = 'Enable to auto-send every night at 11:53 PM';
+  }
+}
+
+function scheduleAutoReport() {
+  if (autoReportTimer) { clearTimeout(autoReportTimer); autoReportTimer = null; }
+  if (!autoReportEnabled) return;
+  const now = new Date();
+  const target = new Date();
+  target.setHours(AUTO_REPORT_HOUR, AUTO_REPORT_MIN, 0, 0);
+  // If already past 11:53 PM today, schedule for tomorrow
+  if (now >= target) target.setDate(target.getDate() + 1);
+  const msUntil = target - now;
+  const mins = Math.round(msUntil / 60000);
+  console.log(`Auto report scheduled in ${mins} min`);
+  autoReportTimer = setTimeout(async () => {
+    // Fire the report — use native share so user picks WhatsApp/Gmail themselves
+    await shareReportNative(true);
+    showToast('⏰ Daily report sent!');
+    // Schedule next day
+    scheduleAutoReport();
+  }, msUntil);
+}
+
+function toggleAutoReport() {
+  autoReportEnabled = !autoReportEnabled;
+  localStorage.setItem('dnh_auto_report', autoReportEnabled ? '1' : '0');
+  updateAutoReportUI();
+  scheduleAutoReport();
+  showToast(autoReportEnabled ? '⏰ Auto report ON — fires at 11:53 PM' : 'Auto report disabled');
+}
+
+function initAutoReport() {
+  autoReportEnabled = localStorage.getItem('dnh_auto_report') === '1';
+  updateAutoReportUI();
+  scheduleAutoReport();
+}
+
 init();
+initAutoReport();
 </script>
 </body>
 </html>
