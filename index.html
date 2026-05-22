@@ -1281,7 +1281,8 @@ let db,menu=[],order={},summaryMode='today';
 let btDevice=null,btChar=null,printerName='',isConnected=false;
 let activeBillCat='All',activeMenuCat='All';
 let editingItemId=null;
-let _isSyncingFromFirebase=false; // prevent loop when we write from remote change
+let _syncingMenu=false; // prevent menu write→listen→write loop
+let _syncingSales=false; // prevent sales write→listen→write loop
 
 const MAX_QTY=990;
 
@@ -1342,14 +1343,13 @@ async function initFirebase(){
 
   // Listen for remote menu changes → update local
   onValue(menuRef, async (snapshot)=>{
-    // Skip if we triggered this ourselves to prevent write→listen→write loops
-    if(_isSyncingFromFirebase) return;
+    if(_syncingMenu) return;
     const remoteMenu=snapshot.val();
     if(remoteMenu===null) {
       await pushMenuToFirebase();
       return;
     }
-    _isSyncingFromFirebase=true;
+    _syncingMenu=true;
     try {
       const incoming=Object.values(remoteMenu);
       await dbClear('menu');
@@ -1359,23 +1359,23 @@ async function initFirebase(){
       renderMenu();
       renderMenuEditor();
     } finally {
-      _isSyncingFromFirebase=false;
+      _syncingMenu=false;
     }
   }, (error)=>{
     setSyncStatus('err');
-    console.warn('Firebase sync error:',error);
+    console.warn('Firebase menu sync error:',error);
   });
 
   // ── SALES SYNC ──
   const salesRef=ref(db(),'dilliNihari/sales');
   onValue(salesRef, async (snapshot)=>{
-    if(_isSyncingFromFirebase) return;
+    if(_syncingSales) return;
     const remoteSales=snapshot.val();
     if(remoteSales===null) {
       await pushSalesToFirebase();
       return;
     }
-    _isSyncingFromFirebase=true;
+    _syncingSales=true;
     try {
       const incoming=Object.values(remoteSales);
       await dbClear('sales');
@@ -1383,7 +1383,7 @@ async function initFirebase(){
       const summaryScreen=document.getElementById('screen-summary');
       if(summaryScreen&&summaryScreen.classList.contains('active')) loadSummary();
     } finally {
-      _isSyncingFromFirebase=false;
+      _syncingSales=false;
     }
   });
 
@@ -1396,11 +1396,11 @@ async function pushMenuToFirebase(){
   const {ref,set,db}=window._fb;
   const menuObj={};
   menu.forEach(item=>{ menuObj[item.id]=item; });
-  _isSyncingFromFirebase=true;
+  _syncingMenu=true;
   try{
     await set(ref(db(),'dilliNihari/menu'), menuObj);
   } catch(e){ setSyncStatus('err'); }
-  finally{ setTimeout(()=>{_isSyncingFromFirebase=false;},500); }
+  finally{ setTimeout(()=>{_syncingMenu=false;},500); }
 }
 
 async function pushSalesToFirebase(){
@@ -1409,11 +1409,11 @@ async function pushSalesToFirebase(){
   const all=await dbGetAll('sales');
   const salesObj={};
   all.forEach(s=>{ salesObj[s.id]=s; });
-  _isSyncingFromFirebase=true;
+  _syncingSales=true;
   try{
     await set(ref(db(),'dilliNihari/sales'), salesObj);
   } catch(e){ setSyncStatus('err'); }
-  finally{ setTimeout(()=>{_isSyncingFromFirebase=false;},500); }
+  finally{ setTimeout(()=>{_syncingSales=false;},500); }
 }
 
 // ─── Init ────────────────────────────────────────────────────
