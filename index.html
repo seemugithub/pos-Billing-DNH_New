@@ -1224,12 +1224,12 @@ body{
     <button class="nav-btn" onclick="showScreen('bill')"><span class="nav-icon">🧾</span>Bill</button>
     <button class="nav-btn" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
     <button class="nav-btn" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
+    <button class="nav-btn" onclick="showScreen('printer')"><span class="nav-icon">🖨️</span>Printer</button>
     <button class="nav-btn active" onclick="showScreen('online')">
       <span class="nav-icon">🌐</span>
       Online
       <span class="online-badge" id="online-badge-nav" style="display:none;font-size:9px;width:16px;height:16px">0</span>
     </button>
-    <button class="nav-btn" onclick="showScreen('online')"><span class="nav-icon">🌐</span>Online<span class="online-badge" id="online-badge-nav-5" style="display:none;font-size:9px;width:16px;height:16px">0</span></button>
     <button class="nav-btn" onclick="showScreen('whatsapp')"><span class="nav-icon">💬</span>WA</button>
   </div>
 </div>
@@ -1311,7 +1311,7 @@ let fbReady=false;
 
 function setSyncStatus(status){
   // status: 'ok' | 'err' | 'off'
-  ['bill','summary','menu','printer'].forEach(scr=>{
+  ['bill','summary','menu','printer','online'].forEach(scr=>{
     const el=document.getElementById('sync-indicator-'+scr);
     const lbl=document.getElementById('sync-label-'+scr);
     if(!el) return;
@@ -1427,7 +1427,7 @@ function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  const navMap={bill:0,summary:1,menu:2,printer:3,online:3,whatsapp:5};
+  const navMap={bill:0,summary:1,menu:2,printer:3,online:4,whatsapp:5};
   document.querySelectorAll('#screen-'+name+' .nav-btn')[navMap[name]]&&
     document.querySelectorAll('#screen-'+name+' .nav-btn')[navMap[name]].classList.add('active');
   if(name==='summary'){initDateDefaults();loadSummary();}
