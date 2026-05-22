@@ -17,7 +17,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, get, } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, set, onValue, get, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   // ─── PASTE YOUR FIREBASE CONFIG HERE ────────────────────────
   // Go to: https://console.firebase.google.com
@@ -46,7 +46,7 @@
   }
 
   // Expose to global scope for use by non-module scripts
-  window._fb = { ref, set, onValue, get, db: () => firebaseDB, enabled: () => syncEnabled };
+  window._fb = { ref, set, onValue, get, remove, push, db: () => firebaseDB, enabled: () => syncEnabled };
 </script>
 
 <style>
@@ -1342,23 +1342,25 @@ async function initFirebase(){
 
   // Listen for remote menu changes → update local
   onValue(menuRef, async (snapshot)=>{
+    // Skip if we triggered this ourselves to prevent write→listen→write loops
+    if(_isSyncingFromFirebase) return;
     const remoteMenu=snapshot.val();
     if(remoteMenu===null) {
-      // Firebase is empty, push local to remote
       await pushMenuToFirebase();
       return;
     }
-    // Convert Firebase object to array
-    const incoming=Object.values(remoteMenu);
-    // Update local IndexedDB to match remote
-    await dbClear('menu');
-    for(const item of incoming){
-      await dbPut('menu',item);
+    _isSyncingFromFirebase=true;
+    try {
+      const incoming=Object.values(remoteMenu);
+      await dbClear('menu');
+      for(const item of incoming){ await dbPut('menu',item); }
+      menu=await dbGetAll('menu');
+      renderCategoryTabs();
+      renderMenu();
+      renderMenuEditor();
+    } finally {
+      _isSyncingFromFirebase=false;
     }
-    menu=await dbGetAll('menu');
-    renderCategoryTabs();
-    renderMenu();
-    renderMenuEditor();
   }, (error)=>{
     setSyncStatus('err');
     console.warn('Firebase sync error:',error);
@@ -1367,19 +1369,22 @@ async function initFirebase(){
   // ── SALES SYNC ──
   const salesRef=ref(db(),'dilliNihari/sales');
   onValue(salesRef, async (snapshot)=>{
+    if(_isSyncingFromFirebase) return;
     const remoteSales=snapshot.val();
     if(remoteSales===null) {
       await pushSalesToFirebase();
       return;
     }
-    const incoming=Object.values(remoteSales);
-    await dbClear('sales');
-    for(const sale of incoming){
-      await dbPut('sales',sale);
+    _isSyncingFromFirebase=true;
+    try {
+      const incoming=Object.values(remoteSales);
+      await dbClear('sales');
+      for(const sale of incoming){ await dbPut('sales',sale); }
+      const summaryScreen=document.getElementById('screen-summary');
+      if(summaryScreen&&summaryScreen.classList.contains('active')) loadSummary();
+    } finally {
+      _isSyncingFromFirebase=false;
     }
-    // Refresh summary if visible
-    const summaryScreen=document.getElementById('screen-summary');
-    if(summaryScreen&&summaryScreen.classList.contains('active')) loadSummary();
   });
 
   // ── ONLINE ORDERS LISTENER ──
@@ -1391,9 +1396,11 @@ async function pushMenuToFirebase(){
   const {ref,set,db}=window._fb;
   const menuObj={};
   menu.forEach(item=>{ menuObj[item.id]=item; });
+  _isSyncingFromFirebase=true;
   try{
     await set(ref(db(),'dilliNihari/menu'), menuObj);
   } catch(e){ setSyncStatus('err'); }
+  finally{ setTimeout(()=>{_isSyncingFromFirebase=false;},500); }
 }
 
 async function pushSalesToFirebase(){
@@ -1402,9 +1409,11 @@ async function pushSalesToFirebase(){
   const all=await dbGetAll('sales');
   const salesObj={};
   all.forEach(s=>{ salesObj[s.id]=s; });
+  _isSyncingFromFirebase=true;
   try{
     await set(ref(db(),'dilliNihari/sales'), salesObj);
   } catch(e){ setSyncStatus('err'); }
+  finally{ setTimeout(()=>{_isSyncingFromFirebase=false;},500); }
 }
 
 // ─── Init ────────────────────────────────────────────────────
@@ -1442,8 +1451,21 @@ function showScreen(name){
   }
   if(name==='online'){
     updateOnlineOrderURL();
-    renderOnlineOrders();
-    updateOnlineOrderBadge();
+    // If Firebase is ready, re-fetch latest orders before rendering
+    if(window._fb && window._fb.enabled()){
+      const {ref,get}=window._fb;
+      get(ref(window._fb.db(),'dilliNihari/onlineOrders')).then(snap=>{
+        onlineOrders = snap.val() ? snap.val() : {};
+        renderOnlineOrders();
+        updateOnlineOrderBadge();
+      }).catch(()=>{
+        renderOnlineOrders();
+        updateOnlineOrderBadge();
+      });
+    } else {
+      renderOnlineOrders();
+      updateOnlineOrderBadge();
+    }
   }
 }
 
