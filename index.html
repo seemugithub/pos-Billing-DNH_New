@@ -17,7 +17,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, set, onValue, get, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   // ─── PASTE YOUR FIREBASE CONFIG HERE ────────────────────────
   // Go to: https://console.firebase.google.com
@@ -46,7 +46,7 @@
   }
 
   // Expose to global scope for use by non-module scripts
-  window._fb = { ref, set, onValue, get, db: () => firebaseDB, enabled: () => syncEnabled };
+  window._fb = { ref, set, onValue, get, remove, push, db: () => firebaseDB, enabled: () => syncEnabled };
 </script>
 
 <style>
@@ -632,6 +632,144 @@ body{
 }
 .card-qty-input::-webkit-outer-spin-button,
 .card-qty-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* ── Online Orders Tab ── */
+.online-body{flex:1;overflow-y:auto;padding:12px;background:var(--bg)}
+.online-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.online-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--red);color:#fff;
+  border-radius:50%;width:20px;height:20px;
+  font-size:11px;font-weight:900;margin-left:6px;
+  animation:pulse-badge 1.4s infinite;
+}
+@keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+.online-empty{
+  text-align:center;padding:40px 20px;
+  color:var(--muted);font-size:13px;font-weight:700;
+}
+.online-empty-icon{font-size:40px;margin-bottom:10px}
+.o-card{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:var(--r);padding:14px;margin-bottom:10px;
+  box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+}
+.o-card.new-order{border-color:#25D366;box-shadow:0 2px 12px rgba(37,211,102,0.18)}
+.o-card.accepted{border-color:var(--accent);opacity:0.7}
+.o-card.rejected{border-color:var(--red);opacity:0.5}
+.o-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.o-order-num{font-size:13px;font-weight:900;color:var(--accent)}
+.o-time{font-size:11px;color:var(--muted);font-weight:700}
+.o-customer{font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px}
+.o-customer span{color:var(--muted);font-weight:700}
+.o-items{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;line-height:1.6}
+.o-item-line{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border2)}
+.o-item-line:last-child{border-bottom:none}
+.o-total-line{display:flex;justify-content:space-between;font-size:14px;font-weight:900;color:var(--accent);margin-top:8px;padding-top:8px;border-top:2px solid var(--border)}
+.o-actions{display:flex;gap:8px;margin-top:10px}
+.o-btn{flex:1;padding:10px;border:none;border-radius:var(--r-sm);font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;font-size:13px;font-weight:900;cursor:pointer;transition:all 0.15s}
+.o-btn.accept{background:#25D366;color:#fff;box-shadow:0 2px 8px rgba(37,211,102,0.25)}
+.o-btn.accept:active{background:#1aab54}
+.o-btn.reject{background:none;border:2px solid var(--border);color:var(--muted)}
+.o-btn.reject:active{border-color:var(--red);color:var(--red)}
+.o-btn.load-bill{background:var(--accent);color:var(--yellow)}
+.o-btn.load-bill:active{background:var(--accent2)}
+.o-status-tag{
+  display:inline-block;font-size:10px;font-weight:800;
+  border-radius:10px;padding:2px 8px;
+  letter-spacing:0.5px;text-transform:uppercase;
+}
+.o-status-tag.pending{background:#FFF8D0;color:#B07D00;border:1px solid #F5C300}
+.o-status-tag.accepted{background:#E8FFF2;color:#1aab54;border:1px solid #25D366}
+.o-status-tag.rejected{background:#FFF0EE;color:var(--red);border:1px solid var(--red)}
+.o-note{font-size:11px;color:var(--muted);font-weight:700;margin-top:4px;font-style:italic}
+.online-link-card{
+  background:var(--highlight);border:2px solid var(--accent);
+  border-radius:var(--r);padding:14px;margin-bottom:12px;
+  box-shadow:var(--shadow-sm);
+}
+.online-link-label{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.online-link-url{
+  font-size:12px;color:var(--accent);font-weight:800;
+  word-break:break-all;margin-bottom:10px;line-height:1.5;
+}
+.online-link-btns{display:flex;gap:8px}
+.ol-btn{
+  flex:1;padding:9px;border:none;border-radius:var(--r-sm);
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
+  font-size:12px;font-weight:900;cursor:pointer;
+  transition:all 0.15s;
+}
+.ol-btn.copy{background:var(--accent);color:var(--yellow)}
+.ol-btn.copy:active{background:var(--accent2)}
+.ol-btn.wa{background:#25D366;color:#fff}
+.ol-btn.wa:active{background:#1aab54}
+.ol-btn.qr{background:var(--chip-bg);border:2px solid var(--border);color:var(--text)}
+/* ── WhatsApp Feature Styles ── */
+.wa-screen-body{flex:1;overflow-y:auto;padding:12px;background:var(--bg)}
+.wa-section{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:var(--r);padding:15px;margin-bottom:12px;
+  box-shadow:var(--shadow-sm);
+}
+.wa-section-title{
+  font-size:13px;font-weight:900;color:var(--text);
+  margin-bottom:4px;display:flex;align-items:center;gap:7px;
+}
+.wa-section-desc{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:12px;line-height:1.5}
+.wa-input-row{display:flex;gap:8px;margin-bottom:10px;align-items:flex-end}
+.wa-input{
+  flex:1;padding:10px 12px;
+  background:var(--bg);border:2px solid var(--border);
+  border-radius:var(--r-sm);color:var(--text);
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
+  font-size:15px;font-weight:700;outline:none;
+  transition:border-color 0.2s;
+}
+.wa-input:focus{border-color:#25D366}
+.wa-input::placeholder{color:var(--border);font-weight:600}
+.wa-btn{
+  padding:10px 14px;
+  background:#25D366;border:none;border-radius:var(--r-sm);
+  color:#fff;
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
+  font-size:14px;font-weight:900;cursor:pointer;
+  transition:all 0.18s;white-space:nowrap;
+  box-shadow:0 2px 8px rgba(37,211,102,0.30);
+  display:flex;align-items:center;gap:6px;
+}
+.wa-btn:active{background:#1aab54;transform:scale(0.97)}
+.wa-btn.full{width:100%;justify-content:center;padding:12px;margin-top:4px}
+.wa-btn.outline{background:none;border:2px solid #25D366;color:#25D366;box-shadow:none}
+.wa-btn.outline:active{background:#e8fff2}
+.wa-country-note{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:8px}
+/* QR code container */
+.qr-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  padding:16px;background:var(--bg);border-radius:var(--r-sm);
+  border:2px dashed var(--border);margin-top:4px;
+}
+#qr-canvas{border-radius:8px;max-width:200px;width:100%}
+.qr-hint{font-size:11px;color:var(--muted);font-weight:700;margin-top:8px;text-align:center;line-height:1.5}
+.qr-btns{display:flex;gap:8px;margin-top:10px;width:100%}
+.qr-btns .wa-btn{flex:1;justify-content:center;font-size:12px}
+/* WA order button on bill */
+.wa-order-btn{
+  width:100%;padding:13px;
+  background:#25D366;
+  border:none;border-radius:var(--r);
+  color:#fff;
+  font-family:'Abadi','AbadI MT','Abadi MT Condensed','Trebuchet MS','Gill Sans MT','Nunito',Arial,sans-serif;
+  font-size:16px;font-weight:900;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all 0.2s;margin-bottom:8px;
+  box-shadow:0 3px 12px rgba(37,211,102,0.28);
+}
+.wa-order-btn:active{background:#1aab54;transform:scale(0.98)}
+/* WA chip in settings bar */
+.s-chip.wa-chip{border-color:#25D366;background:#E8FFF2}
+.s-chip.wa-chip .chip-label{color:#1aab54}
 </style>
 </head>
 <body>
@@ -666,6 +804,11 @@ body{
       <div class="dot" id="bt-dot-bill"></div>
       <span class="chip-label" id="bt-label-bill">No Printer</span>
     </div>
+    <div class="s-divider"></div>
+    <div class="s-chip wa-chip" onclick="showScreen('whatsapp')">
+      <span class="chip-icon">💬</span>
+      <span class="chip-label">WhatsApp</span>
+    </div>
   </div>
 
   <div class="cat-bar" id="cat-bar-bill"></div>
@@ -688,6 +831,7 @@ body{
       </div>
     </div>
     <button class="print-btn" id="print-btn" onclick="openReceipt()" style="display:none">🖨️ Print Receipt</button>
+    <button class="wa-order-btn" id="wa-order-btn" onclick="sendOrderViaWhatsApp()" style="display:none">💬 Send Order via WhatsApp</button>
     <button class="clear-btn" id="clear-btn" onclick="clearOrder()" style="display:none">Clear Order</button>
   </div>
 
@@ -696,6 +840,8 @@ body{
     <button class="nav-btn" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
     <button class="nav-btn" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
     <button class="nav-btn" onclick="showScreen('printer')"><span class="nav-icon">🖨️</span>Printer</button>
+    <button class="nav-btn" onclick="showScreen('online')"><span class="nav-icon">🌐</span>Online<span class="online-badge" id="online-badge-nav-1" style="display:none;font-size:9px;width:16px;height:16px">0</span></button>
+    <button class="nav-btn" onclick="showScreen('whatsapp')"><span class="nav-icon">💬</span>WA</button>
   </div>
 </div>
 
@@ -718,6 +864,11 @@ body{
     <div class="s-chip" id="bt-chip-summary" onclick="showScreen('printer')">
       <div class="dot" id="bt-dot-summary"></div>
       <span class="chip-label" id="bt-label-summary">No Printer</span>
+    </div>
+    <div class="s-divider"></div>
+    <div class="s-chip wa-chip" onclick="showScreen('whatsapp')">
+      <span class="chip-icon">💬</span>
+      <span class="chip-label">WhatsApp</span>
     </div>
   </div>
   <div class="summary-body">
@@ -799,6 +950,8 @@ body{
     <button class="nav-btn active" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
     <button class="nav-btn" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
     <button class="nav-btn" onclick="showScreen('printer')"><span class="nav-icon">🖨️</span>Printer</button>
+    <button class="nav-btn" onclick="showScreen('online')"><span class="nav-icon">🌐</span>Online<span class="online-badge" id="online-badge-nav-2" style="display:none;font-size:9px;width:16px;height:16px">0</span></button>
+    <button class="nav-btn" onclick="showScreen('whatsapp')"><span class="nav-icon">💬</span>WA</button>
   </div>
 </div>
 
@@ -821,6 +974,11 @@ body{
     <div class="s-chip" id="bt-chip-menu" onclick="showScreen('printer')">
       <div class="dot" id="bt-dot-menu"></div>
       <span class="chip-label" id="bt-label-menu">No Printer</span>
+    </div>
+    <div class="s-divider"></div>
+    <div class="s-chip wa-chip" onclick="showScreen('whatsapp')">
+      <span class="chip-icon">💬</span>
+      <span class="chip-label">WhatsApp</span>
     </div>
   </div>
   <div class="cat-bar" id="cat-bar-menu"></div>
@@ -849,6 +1007,8 @@ body{
     <button class="nav-btn" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
     <button class="nav-btn active" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
     <button class="nav-btn" onclick="showScreen('printer')"><span class="nav-icon">🖨️</span>Printer</button>
+    <button class="nav-btn" onclick="showScreen('online')"><span class="nav-icon">🌐</span>Online<span class="online-badge" id="online-badge-nav-3" style="display:none;font-size:9px;width:16px;height:16px">0</span></button>
+    <button class="nav-btn" onclick="showScreen('whatsapp')"><span class="nav-icon">💬</span>WA</button>
   </div>
 </div>
 
@@ -871,6 +1031,11 @@ body{
     <div class="s-chip active-chip" id="bt-chip-printer" onclick="showScreen('printer')">
       <div class="dot" id="bt-dot-printer"></div>
       <span class="chip-label" id="bt-label-printer">Printer</span>
+    </div>
+    <div class="s-divider"></div>
+    <div class="s-chip wa-chip" onclick="showScreen('whatsapp')">
+      <span class="chip-icon">💬</span>
+      <span class="chip-label">WhatsApp</span>
     </div>
   </div>
   <div class="printer-body">
@@ -913,10 +1078,161 @@ body{
     <button class="nav-btn" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
     <button class="nav-btn" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
     <button class="nav-btn active" onclick="showScreen('printer')"><span class="nav-icon">🖨️</span>Printer</button>
+    <button class="nav-btn" onclick="showScreen('online')"><span class="nav-icon">🌐</span>Online<span class="online-badge" id="online-badge-nav-4" style="display:none;font-size:9px;width:16px;height:16px">0</span></button>
+    <button class="nav-btn" onclick="showScreen('whatsapp')"><span class="nav-icon">💬</span>WA</button>
   </div>
 </div>
 
-<!-- Receipt Modal -->
+<!-- ===================== WHATSAPP SCREEN ===================== -->
+<div class="screen" id="screen-whatsapp">
+  <div class="header">
+    <div class="header-badge">Dilli Nihari House</div>
+    <div class="header-sub">WhatsApp Menu & Orders</div>
+  </div>
+  <div class="settings-bar">
+    <div class="s-chip" onclick="showScreen('bill')"><span class="chip-icon">🧾</span><span class="chip-label">New Bill</span></div>
+    <div class="s-divider"></div>
+    <div class="s-chip" onclick="showScreen('summary')"><span class="chip-icon">📊</span><span class="chip-label">Sales</span></div>
+    <div class="s-chip" onclick="showScreen('menu')"><span class="chip-icon">📋</span><span class="chip-label">Menu</span></div>
+    <div class="s-divider"></div>
+    <div class="s-chip" onclick="showScreen('printer')">
+      <div class="dot" id="bt-dot-wa"></div>
+      <span class="chip-label" id="bt-label-wa">Printer</span>
+    </div>
+    <div class="s-divider"></div>
+    <div class="s-chip active-chip wa-chip" onclick="showScreen('whatsapp')">
+      <span class="chip-icon">💬</span>
+      <span class="chip-label">WhatsApp</span>
+    </div>
+  </div>
+
+  <div class="wa-screen-body">
+
+    <!-- Section 1: Share Menu via WhatsApp Number -->
+    <div class="wa-section">
+      <div class="wa-section-title">📤 Share Menu via WhatsApp</div>
+      <div class="wa-section-desc">Enter a customer's number to send them your full menu directly on WhatsApp.</div>
+      <div class="wa-country-note">Include country code (e.g. 91 for India)</div>
+      <div class="wa-input-row">
+        <input class="wa-input" id="wa-phone-input" type="tel" inputmode="numeric" placeholder="91XXXXXXXXXX" maxlength="15">
+        <button class="wa-btn" onclick="shareMenuToNumber()">
+          <span>📲</span> Send
+        </button>
+      </div>
+      <button class="wa-btn full outline" onclick="shareMenuToNumber(true)">
+        💬 Open WhatsApp (No Number)
+      </button>
+    </div>
+
+    <!-- Section 2: QR Code for Menu -->
+    <div class="wa-section">
+      <div class="wa-section-title">📱 Menu QR Code</div>
+      <div class="wa-section-desc">Display this QR code at your counter. Customers scan it to instantly see your full menu on WhatsApp.</div>
+      <div class="qr-wrap">
+        <canvas id="qr-canvas" width="200" height="200"></canvas>
+        <div class="qr-hint">📷 Customer scans this → Menu opens in WhatsApp</div>
+      </div>
+      <div class="qr-btns">
+        <button class="wa-btn outline" onclick="downloadQR()" style="font-size:12px;padding:10px">⬇ Download QR</button>
+        <button class="wa-btn" onclick="regenerateQR()" style="font-size:12px;padding:10px">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- Section 3: Restaurant WhatsApp Number Setting -->
+    <div class="wa-section">
+      <div class="wa-section-title">⚙️ Your Restaurant WhatsApp Number</div>
+      <div class="wa-section-desc">Customers will send their orders to this number. Save your WhatsApp business number here.</div>
+      <div class="wa-input-row">
+        <input class="wa-input" id="wa-restaurant-number" type="tel" inputmode="numeric" placeholder="91XXXXXXXXXX" maxlength="15">
+        <button class="wa-btn" onclick="saveRestaurantWANumber()">Save</button>
+      </div>
+      <div id="wa-saved-note" style="font-size:11px;color:#1aab54;font-weight:800;display:none">✓ Number saved!</div>
+    </div>
+
+    <!-- Section 4: How it works -->
+    <div class="wa-section" style="background:var(--highlight);border-color:var(--accent)">
+      <div class="wa-section-title" style="color:var(--accent)">ℹ️ How It Works</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700;line-height:1.8">
+        1️⃣ <strong>Share Menu</strong> — Send your menu to any customer's WhatsApp number directly.<br>
+        2️⃣ <strong>QR Code</strong> — Place this at the counter; customers scan to see the menu.<br>
+        3️⃣ <strong>Order via WA</strong> — On the Bill screen, add items then tap <em>"Send Order via WhatsApp"</em> to share the order summary to the customer.<br>
+        4️⃣ <strong>Customer Orders</strong> — Customers can also reply to your WhatsApp with their order.
+      </div>
+    </div>
+
+  </div>
+  <div class="nav">
+    <button class="nav-btn" onclick="showScreen('bill')"><span class="nav-icon">🧾</span>Bill</button>
+    <button class="nav-btn" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
+    <button class="nav-btn" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
+    <button class="nav-btn" onclick="showScreen('printer')"><span class="nav-icon">🖨️</span>Printer</button>
+    <button class="nav-btn" onclick="showScreen('online')"><span class="nav-icon">🌐</span>Online<span class="online-badge" id="online-badge-nav-wa" style="display:none;font-size:9px;width:16px;height:16px">0</span></button>
+    <button class="nav-btn active" onclick="showScreen('whatsapp')"><span class="nav-icon">💬</span>WA</button>
+  </div>
+</div>
+
+<!-- ===================== ONLINE ORDERS SCREEN ===================== -->
+<div class="screen" id="screen-online">
+  <div class="header">
+    <div class="header-badge">Dilli Nihari House</div>
+    <div class="header-sub">Online Orders</div>
+    <div class="sync-dot" id="sync-indicator-online">
+      <div class="dot"></div>
+      <span id="sync-label-online">SYNC</span>
+    </div>
+  </div>
+  <div class="settings-bar" style="overflow-x:auto">
+    <div class="s-chip" onclick="showScreen('bill')"><span class="chip-icon">🧾</span><span class="chip-label">New Bill</span></div>
+    <div class="s-divider"></div>
+    <div class="s-chip" onclick="showScreen('summary')"><span class="chip-icon">📊</span><span class="chip-label">Sales</span></div>
+    <div class="s-chip" onclick="showScreen('menu')"><span class="chip-icon">📋</span><span class="chip-label">Menu</span></div>
+    <div class="s-divider"></div>
+    <div class="s-chip active-chip" onclick="showScreen('online')">
+      <span class="chip-icon">🌐</span>
+      <span class="chip-label">Online Orders</span>
+      <span class="online-badge" id="online-badge-settings" style="display:none">0</span>
+    </div>
+  </div>
+
+  <div class="online-body">
+    <!-- Shareable link card -->
+    <div class="online-link-card">
+      <div class="online-link-label">📲 Your Customer Ordering Link</div>
+      <div class="online-link-url" id="online-order-url">Loading…</div>
+      <div class="online-link-btns">
+        <button class="ol-btn copy" onclick="copyOrderLink()">📋 Copy Link</button>
+        <button class="ol-btn wa" onclick="shareOrderLinkWA()">💬 Share on WA</button>
+        <button class="ol-btn qr" onclick="showScreen('whatsapp')">📱 QR Code</button>
+      </div>
+    </div>
+
+    <!-- Orders list -->
+    <div class="online-header-row">
+      <div class="section-label" style="margin-bottom:0">Incoming Orders</div>
+      <button class="dl-btn" onclick="clearRejectedOrders()" style="background:var(--muted)">Clear Rejected</button>
+    </div>
+    <div id="online-orders-list">
+      <div class="online-empty">
+        <div class="online-empty-icon">📭</div>
+        Waiting for orders…<br>
+        <span style="font-size:11px">Share your link with customers to start receiving orders</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn" onclick="showScreen('bill')"><span class="nav-icon">🧾</span>Bill</button>
+    <button class="nav-btn" onclick="showScreen('summary')"><span class="nav-icon">📊</span>Sales</button>
+    <button class="nav-btn" onclick="showScreen('menu')"><span class="nav-icon">📋</span>Menu</button>
+    <button class="nav-btn active" onclick="showScreen('online')">
+      <span class="nav-icon">🌐</span>
+      Online
+      <span class="online-badge" id="online-badge-nav" style="display:none;font-size:9px;width:16px;height:16px">0</span>
+    </button>
+    <button class="nav-btn" onclick="showScreen('online')"><span class="nav-icon">🌐</span>Online<span class="online-badge" id="online-badge-nav-5" style="display:none;font-size:9px;width:16px;height:16px">0</span></button>
+    <button class="nav-btn" onclick="showScreen('whatsapp')"><span class="nav-icon">💬</span>WA</button>
+  </div>
+</div>
 <div class="modal-overlay" id="modal">
   <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:300px">
     <div class="receipt" id="receipt-content"></div>
@@ -953,6 +1269,12 @@ body{
 <div class="toast" id="toast"></div>
 
 <script>
+// ─── Customer Mode Detection ──────────────────────────────────
+// If opened with ?mode=customer, show the customer ordering UI
+if(new URLSearchParams(window.location.search).get('mode')==='customer'){
+  document.addEventListener('DOMContentLoaded', initCustomerMode);
+}
+
 // ─── State ───────────────────────────────────────────────────
 const DB_NAME='DilliNihari3';const DB_VER=1;
 let db,menu=[],order={},summaryMode='today';
@@ -1059,6 +1381,9 @@ async function initFirebase(){
     const summaryScreen=document.getElementById('screen-summary');
     if(summaryScreen&&summaryScreen.classList.contains('active')) loadSummary();
   });
+
+  // ── ONLINE ORDERS LISTENER ──
+  initOnlineOrdersListener();
 }
 
 async function pushMenuToFirebase(){
@@ -1102,13 +1427,24 @@ function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  const navMap={bill:0,summary:1,menu:2,printer:3};
+  const navMap={bill:0,summary:1,menu:2,printer:3,online:3,whatsapp:5};
   document.querySelectorAll('#screen-'+name+' .nav-btn')[navMap[name]]&&
     document.querySelectorAll('#screen-'+name+' .nav-btn')[navMap[name]].classList.add('active');
   if(name==='summary'){initDateDefaults();loadSummary();}
   if(name==='menu'){renderCategoryTabs();renderMenuEditor();}
   if(name==='printer') refreshPrinterUI();
   if(name==='bill'){renderCategoryTabs();renderMenu();}
+  if(name==='whatsapp'){
+    loadQRLibAndRender();
+    dbGetOne('settings','wa_restaurant_number').then(s=>{
+      if(s&&s.number) document.getElementById('wa-restaurant-number').value=s.number;
+    });
+  }
+  if(name==='online'){
+    updateOnlineOrderURL();
+    renderOnlineOrders();
+    updateOnlineOrderBadge();
+  }
 }
 
 // ─── Categories ──────────────────────────────────────────────
@@ -1244,14 +1580,17 @@ function renderOrder(){
   const totalBar=document.getElementById('total-bar');
   const printBtn=document.getElementById('print-btn');
   const clearBtn=document.getElementById('clear-btn');
+  const waBtn=document.getElementById('wa-order-btn');
   const list=document.getElementById('order-list');
   if(keys.length===0){
     section.style.display='none';totalBar.style.display='none';
     printBtn.style.display='none';clearBtn.style.display='none';
+    if(waBtn) waBtn.style.display='none';
     return;
   }
   section.style.display='block';totalBar.style.display='flex';
   printBtn.style.display='flex';clearBtn.style.display='block';
+  if(waBtn) waBtn.style.display='flex';
   let total=0,itemCount=0;list.innerHTML='';
   keys.forEach(id=>{
     const item=menu.find(m=>m.id===id);if(!item) return;
@@ -1655,11 +1994,11 @@ function showToast(msg){
 
 // ─── Printer / Bluetooth ─────────────────────────────────────
 function updateAllChips(){
-  ['bill','summary','menu','printer'].forEach(scr=>{
+  ['bill','summary','menu','printer','wa'].forEach(scr=>{
     const chip=document.getElementById('bt-chip-'+scr);
     const dot=document.getElementById('bt-dot-'+scr);
     const lbl=document.getElementById('bt-label-'+scr);
-    if(!chip) return;
+    if(!chip&&!dot) return;
     if(isConnected){
       chip.classList.add('printer-ok');
       if(dot){dot.style.background='var(--green)';}
@@ -1814,7 +2153,546 @@ async function testPrint(){
   if(ok) showToast('✓ Test page sent!');
 }
 
-init();
+// ─── Online Orders ───────────────────────────────────────────
+let onlineOrders = {}; // keyed by Firebase push ID
+
+// Generate the customer ordering URL for this restaurant
+function getOnlineOrderURL(){
+  const dbUrl = 'pos-billing-dnh-new-default-rtdb.asia-southeast1.firebasedatabase.app';
+  // Encode config so customer page can connect to same Firebase
+  const cfg = btoa(JSON.stringify({
+    databaseURL: 'https://'+dbUrl,
+    apiKey: 'AIzaSyClwI-C4gbNkGQcTu8FPGui907G_SxJ6u4',
+    projectId: 'pos-billing-dnh-new'
+  }));
+  return window.location.href.replace(/\/[^\/]*$|$/, '') + '/menu.html?cfg=' + cfg;
+}
+
+function updateOnlineOrderURL(){
+  const el = document.getElementById('online-order-url');
+  if(el){
+    // Show a clean version - just use current page URL with ?mode=customer
+    const base = window.location.href.split('?')[0];
+    const url = base + '?mode=customer';
+    el.textContent = url;
+    el._fullUrl = url;
+  }
+}
+
+function copyOrderLink(){
+  const el = document.getElementById('online-order-url');
+  const url = el ? (el._fullUrl || el.textContent) : window.location.href + '?mode=customer';
+  navigator.clipboard.writeText(url).then(()=>showToast('✓ Link copied!')).catch(()=>{
+    // fallback
+    const ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    showToast('✓ Link copied!');
+  });
+}
+
+function shareOrderLinkWA(){
+  const el = document.getElementById('online-order-url');
+  const url = el ? (el._fullUrl || el.textContent) : window.location.href + '?mode=customer';
+  const text = encodeURIComponent('🍽️ Order from Dilli Nihari House!\nTap to view menu & place your order:\n' + url);
+  window.open('https://wa.me/?text='+text,'_blank');
+}
+
+// Listen for online orders from Firebase
+function initOnlineOrdersListener(){
+  if(!window._fb || !window._fb.enabled()) return;
+  const {ref, onValue} = window._fb;
+  const ordersRef = ref(window._fb.db(), 'dilliNihari/onlineOrders');
+  onValue(ordersRef, (snapshot)=>{
+    const data = snapshot.val();
+    onlineOrders = data ? data : {};
+    renderOnlineOrders();
+    updateOnlineOrderBadge();
+  });
+}
+
+function updateOnlineOrderBadge(){
+  const pending = Object.values(onlineOrders).filter(o=>o.status==='pending').length;
+  // Update all badges
+  document.querySelectorAll('[id^="online-badge"]').forEach(el=>{
+    if(pending>0){
+      el.style.display='inline-flex';
+      el.textContent=pending;
+    } else {
+      el.style.display='none';
+    }
+  });
+}
+
+function renderOnlineOrders(){
+  const list = document.getElementById('online-orders-list');
+  if(!list) return;
+  const orders = Object.entries(onlineOrders)
+    .map(([id,o])=>({...o, _fbId:id}))
+    .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  if(orders.length===0){
+    list.innerHTML=`<div class="online-empty"><div class="online-empty-icon">📭</div>Waiting for orders…<br><span style="font-size:11px">Share your link with customers to start receiving orders</span></div>`;
+    return;
+  }
+  list.innerHTML='';
+  orders.forEach(o=>{
+    const card = document.createElement('div');
+    const statusClass = o.status==='pending'?'new-order':o.status;
+    card.className = 'o-card '+statusClass;
+    const time = o.timestamp ? new Date(o.timestamp).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : '';
+    const date = o.timestamp ? new Date(o.timestamp).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '';
+    let itemsHtml = '';
+    (o.items||[]).forEach(it=>{
+      itemsHtml += `<div class="o-item-line"><span>${it.name} ×${it.qty}</span><span>₹${it.price*it.qty}</span></div>`;
+    });
+    const statusTag = `<span class="o-status-tag ${o.status||'pending'}">${o.status==='pending'?'🔔 New':o.status==='accepted'?'✓ Accepted':'✗ Rejected'}</span>`;
+    let actionsHtml = '';
+    if(o.status==='pending'){
+      actionsHtml = `
+        <div class="o-actions">
+          <button class="o-btn accept" onclick="acceptOnlineOrder('${o._fbId}')">✓ Accept</button>
+          <button class="o-btn load-bill" onclick="loadOnlineOrderToBill('${o._fbId}')">🧾 Load to Bill</button>
+          <button class="o-btn reject" onclick="rejectOnlineOrder('${o._fbId}')">✗ Reject</button>
+        </div>`;
+    } else if(o.status==='accepted'){
+      actionsHtml = `<div class="o-actions"><button class="o-btn load-bill" onclick="loadOnlineOrderToBill('${o._fbId}')">🧾 Load to Bill</button></div>`;
+    }
+    card.innerHTML = `
+      <div class="o-card-top">
+        <span class="o-order-num">Order #${(o.orderNo||o._fbId.slice(-4)).toString().toUpperCase()}</span>
+        <span class="o-time">${date} ${time}</span>
+      </div>
+      ${statusTag}
+      <div class="o-customer" style="margin-top:6px">👤 ${o.customerName||'Customer'} <span>· ${o.customerPhone||''}</span></div>
+      ${o.note?`<div class="o-note">📝 "${o.note}"</div>`:''}
+      <div style="margin-top:8px">${itemsHtml}</div>
+      <div class="o-total-line"><span>Total</span><span>₹${o.total||0}</span></div>
+      ${actionsHtml}`;
+    list.appendChild(card);
+  });
+}
+
+async function acceptOnlineOrder(fbId){
+  if(!window._fb||!window._fb.enabled()){showToast('⚠️ Firebase not connected');return;}
+  const {ref,set} = window._fb;
+  await set(ref(window._fb.db(), 'dilliNihari/onlineOrders/'+fbId+'/status'), 'accepted');
+  showToast('✓ Order accepted!');
+}
+
+async function rejectOnlineOrder(fbId){
+  if(!confirm('Reject this order?')) return;
+  if(!window._fb||!window._fb.enabled()){showToast('⚠️ Firebase not connected');return;}
+  const {ref,set} = window._fb;
+  await set(ref(window._fb.db(), 'dilliNihari/onlineOrders/'+fbId+'/status'), 'rejected');
+  showToast('Order rejected');
+}
+
+function loadOnlineOrderToBill(fbId){
+  const o = onlineOrders[fbId];
+  if(!o||!o.items) return;
+  // Clear current order and load online order items
+  order = {};
+  o.items.forEach(oi=>{
+    // Find matching menu item by name
+    const menuItem = menu.find(m=>m.name===oi.name);
+    if(menuItem) order[menuItem.id] = oi.qty;
+  });
+  showScreen('bill');
+  renderMenu();
+  renderOrder();
+  showToast('✓ Order loaded to Bill!');
+  // Mark as accepted
+  acceptOnlineOrder(fbId);
+}
+
+async function clearRejectedOrders(){
+  if(!window._fb||!window._fb.enabled()){showToast('⚠️ Firebase not connected');return;}
+  const {ref,remove} = window._fb;
+  const toDelete = Object.entries(onlineOrders).filter(([,o])=>o.status==='rejected');
+  if(toDelete.length===0){showToast('No rejected orders');return;}
+  for(const [id] of toDelete){
+    await remove(ref(window._fb.db(), 'dilliNihari/onlineOrders/'+id));
+  }
+  showToast('✓ Cleared rejected orders');
+}
+
+// ─── WhatsApp Features ───────────────────────────────────────
+
+// Build formatted menu text for WhatsApp
+function buildMenuText(){
+  if(!menu||menu.length===0) return '🍽️ Menu is currently empty.';
+  // Group by category
+  const cats={};
+  menu.forEach(item=>{
+    const cat=item.category||'Uncategorised';
+    if(!cats[cat]) cats[cat]=[];
+    cats[cat].push(item);
+  });
+  let txt='🍽️ *Dilli Nihari House — Menu*\n';
+  txt+='📍 Authentic Delhi Cuisine\n\n';
+  Object.keys(cats).forEach(cat=>{
+    txt+=`*━━ ${cat.toUpperCase()} ━━*\n`;
+    cats[cat].forEach(item=>{
+      txt+=`• ${item.name} — ₹${item.price}\n`;
+    });
+    txt+='\n';
+  });
+  txt+='📞 To order, just reply with your items!\n';
+  txt+='Thank you 🙏';
+  return txt;
+}
+
+async function getRestaurantWANumber(){
+  const saved=await dbGetOne('settings','wa_restaurant_number');
+  return saved&&saved.number?saved.number:'';
+}
+
+async function shareMenuToNumber(noNumber=false){
+  const text=encodeURIComponent(buildMenuText());
+  if(noNumber){
+    window.open('https://wa.me/?text='+text,'_blank');
+    return;
+  }
+  const phone=document.getElementById('wa-phone-input').value.replace(/\D/g,'').trim();
+  if(!phone||phone.length<7){showToast('⚠️ Enter a valid phone number');return;}
+  window.open('https://wa.me/'+phone+'?text='+text,'_blank');
+  showToast('✓ Opening WhatsApp…');
+}
+
+async function sendOrderViaWhatsApp(){
+  const keys=Object.keys(order).map(Number);
+  if(keys.length===0){showToast('⚠️ No items in order');return;}
+  let total=0;
+  let txt='🛒 *Order from Dilli Nihari House*\n\n';
+  keys.forEach(id=>{
+    const item=menu.find(m=>m.id===id);if(!item)return;
+    const qty=order[id];const sub=item.price*qty;total+=sub;
+    txt+=`• ${item.name} ×${qty} — ₹${sub}\n`;
+  });
+  txt+='\n';
+  txt+=`*Total: ₹${total}*\n`;
+  txt+='📅 '+new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'\n';
+  txt+='Thank you! 🙏';
+  // Try to send to restaurant number
+  const restNum=await getRestaurantWANumber();
+  const encoded=encodeURIComponent(txt);
+  if(restNum){
+    window.open('https://wa.me/'+restNum.replace(/\D/g,'')+'?text='+encoded,'_blank');
+  } else {
+    window.open('https://wa.me/?text='+encoded,'_blank');
+  }
+  showToast('✓ Order sent to WhatsApp!');
+}
+
+async function saveRestaurantWANumber(){
+  const num=document.getElementById('wa-restaurant-number').value.replace(/\D/g,'').trim();
+  if(!num||num.length<7){showToast('⚠️ Enter a valid number');return;}
+  await dbPut('settings',{key:'wa_restaurant_number',number:num});
+  document.getElementById('wa-saved-note').style.display='block';
+  setTimeout(()=>{document.getElementById('wa-saved-note').style.display='none';},2500);
+  showToast('✓ Number saved!');
+  renderQRCode(); // regenerate QR with new number
+}
+
+// ─── QR Code Generator (pure canvas, no library needed) ──────
+// Uses a simple URL QR pointing to wa.me with the menu
+
+function renderQRCode(){
+  const menuText=buildMenuText();
+  const restNumEl=document.getElementById('wa-restaurant-number');
+  const restNum=restNumEl?restNumEl.value.replace(/\D/g,''):'';
+  const encoded=encodeURIComponent(menuText);
+  const waUrl=restNum?'https://wa.me/'+restNum+'?text='+encoded:'https://wa.me/?text='+encoded;
+  drawQR('qr-canvas',waUrl);
+}
+
+function regenerateQR(){
+  renderQRCode();
+  showToast('✓ QR Code refreshed!');
+}
+
+function downloadQR(){
+  const canvas=document.getElementById('qr-canvas');
+  if(!canvas)return;
+  const link=document.createElement('a');
+  link.download='dilli-nihari-menu-qr.png';
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+  showToast('✓ QR Code downloaded!');
+}
+
+// Minimal QR code renderer using qrcode-generator via CDN
+function drawQR(canvasId, text){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  // Use qrcodejs if loaded, otherwise show fallback
+  if(window.QRCode){
+    // Clear previous
+    canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+    // Temporarily use a div to generate, then draw to canvas
+    const tmp=document.createElement('div');
+    tmp.style.display='none';
+    document.body.appendChild(tmp);
+    new window.QRCode(tmp,{
+      text:text,
+      width:200,height:200,
+      colorDark:'#2A1A40',colorLight:'#ffffff',
+      correctLevel:window.QRCode.CorrectLevel.M
+    });
+    setTimeout(()=>{
+      const img=tmp.querySelector('img');
+      const cvs=tmp.querySelector('canvas');
+      if(cvs){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(cvs,0,0,200,200);
+      } else if(img){
+        img.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,200,200);};
+      }
+      document.body.removeChild(tmp);
+    },200);
+  } else {
+    // Fallback: draw a placeholder
+    ctx.clearRect(0,0,200,200);
+    ctx.fillStyle='#f3f0f8';ctx.fillRect(0,0,200,200);
+    ctx.strokeStyle='#5B2D8E';ctx.lineWidth=3;ctx.strokeRect(4,4,192,192);
+    ctx.fillStyle='#5B2D8E';
+    ctx.font='bold 13px Arial';ctx.textAlign='center';
+    ctx.fillText('Loading QR…',100,100);
+    ctx.font='11px Arial';
+    ctx.fillStyle='#7A6A9A';
+    ctx.fillText('Ensure internet is on',100,120);
+  }
+}
+
+// Load QR library from CDN, then render
+function loadQRLibAndRender(){
+  if(window.QRCode){renderQRCode();return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+  s.onload=()=>{renderQRCode();};
+  s.onerror=()=>{renderQRCode();}; // will show fallback
+  document.head.appendChild(s);
+}
+
+// ─── Customer Mode ────────────────────────────────────────────
+async function initCustomerMode(){
+  // Hide entire POS UI
+  document.querySelector('body').innerHTML = `
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--accent:#5B2D8E;--accent2:#7B3FB8;--gold:#F5C300;--yellow:#FFD700;--bg:#F3F0F8;--card:#fff;--border:#D8C8F0;--muted:#7A6A9A;--text:#2A1A40;--green:#1A6B35;--r:14px;--r-sm:9px}
+body{background:var(--bg);color:var(--text);font-family:'Trebuchet MS',Arial,sans-serif;font-weight:700;min-height:100vh;max-width:430px;margin:0 auto}
+.c-header{background:var(--accent);padding:14px 16px 11px;text-align:center;box-shadow:0 2px 8px rgba(60,20,100,0.30)}
+.c-title{font-size:21px;font-weight:800;color:var(--yellow);letter-spacing:0.3px}
+.c-sub{font-size:11px;color:rgba(255,220,0,0.82);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.c-body{padding:12px;padding-bottom:100px}
+.c-section-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:800}
+.c-cat-bar{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 6px;background:#fff;border-bottom:2px solid var(--border)}
+.c-cat-bar::-webkit-scrollbar{display:none}
+.c-cat-tab{padding:5px 14px;border-radius:20px;border:2px solid var(--border);background:#EDE8F8;color:var(--muted);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all 0.15s;flex-shrink:0}
+.c-cat-tab.active{background:var(--accent);border-color:var(--accent);color:var(--yellow)}
+.c-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.c-item{background:var(--card);border:2px solid var(--border);border-radius:var(--r-sm);padding:11px;cursor:pointer;transition:all 0.15s;position:relative}
+.c-item.in-order{border-color:var(--accent);background:#FFF8D0}
+.c-item-cat{font-size:10px;font-weight:800;color:var(--muted);background:#EDE8F8;border-radius:6px;padding:1px 6px;margin-bottom:4px;display:inline-block;text-transform:uppercase}
+.c-item-name{font-size:14px;font-weight:800;color:var(--text);line-height:1.3}
+.c-item-price{font-size:16px;font-weight:900;color:var(--accent);margin-top:4px}
+.c-item-hint{font-size:10px;color:var(--muted);margin-top:4px;opacity:0.7}
+.c-qty-ctrl{display:flex;align-items:center;margin-top:7px;background:#fff;border:2px solid var(--accent);border-radius:20px;overflow:hidden;height:30px}
+.c-qty-btn{width:30px;height:100%;background:none;border:none;color:var(--accent);font-size:18px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.c-qty-btn:active{background:var(--accent);color:#fff}
+.c-qty-val{flex:1;text-align:center;font-size:14px;font-weight:900;color:var(--text)}
+/* Cart / checkout */
+.c-cart-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:2px solid var(--border);padding:10px 12px;box-shadow:0 -3px 12px rgba(60,20,100,0.12);z-index:100}
+.c-cart-btn{width:100%;padding:14px;background:var(--accent);border:none;border-radius:var(--r);color:var(--yellow);font-size:16px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.c-cart-btn:active{background:var(--accent2)}
+.c-cart-btn-total{background:rgba(255,255,255,0.2);border-radius:20px;padding:3px 10px;font-size:14px}
+/* Checkout panel */
+.c-checkout{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:flex-end;justify-content:center}
+.c-checkout.open{display:flex}
+.c-checkout-card{background:#fff;border-radius:var(--r) var(--r) 0 0;padding:20px;width:100%;max-width:430px;max-height:90vh;overflow-y:auto}
+.c-checkout-title{font-size:17px;font-weight:900;color:var(--text);margin-bottom:16px}
+.c-form-label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block;font-weight:800}
+.c-form-input{width:100%;padding:11px 13px;background:var(--bg);border:2px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:15px;font-weight:700;outline:none;margin-bottom:12px;font-family:inherit;transition:border-color 0.2s}
+.c-form-input:focus{border-color:var(--accent)}
+.c-order-summary{background:var(--bg);border-radius:var(--r-sm);padding:12px;margin-bottom:14px}
+.c-sum-row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:3px 0;color:var(--muted)}
+.c-sum-total{display:flex;justify-content:space-between;font-size:16px;font-weight:900;color:var(--accent);margin-top:8px;padding-top:8px;border-top:2px solid var(--border)}
+.c-place-btn{width:100%;padding:15px;background:#25D366;border:none;border-radius:var(--r);color:#fff;font-size:16px;font-weight:900;cursor:pointer;margin-bottom:8px;font-family:inherit}
+.c-place-btn:active{background:#1aab54}
+.c-cancel-btn{width:100%;padding:11px;background:none;border:2px solid var(--border);border-radius:var(--r);color:var(--muted);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
+.c-success{display:none;text-align:center;padding:30px 20px}
+.c-success-icon{font-size:56px;margin-bottom:12px}
+.c-success-title{font-size:20px;font-weight:900;color:var(--accent);margin-bottom:8px}
+.c-success-sub{font-size:13px;color:var(--muted);font-weight:700;line-height:1.6}
+.c-loading{text-align:center;padding:40px;color:var(--muted);font-size:14px;font-weight:700}
+.c-err{background:#FFF0EE;border:2px solid #C8380A;border-radius:var(--r);padding:14px;margin:12px;font-size:13px;color:#C8380A;font-weight:700}
+</style>
+<div class="c-header"><div class="c-title">Dilli Nihari House</div><div class="c-sub">Online Menu & Order</div></div>
+<div class="c-cat-bar" id="c-cat-bar"></div>
+<div class="c-body"><div class="c-section-label">Tap to add items</div><div class="c-grid" id="c-grid"><div class="c-loading">Loading menu…</div></div></div>
+<div class="c-cart-bar" id="c-cart-bar" style="display:none">
+  <button class="c-cart-btn" onclick="openCheckout()">
+    <span>🛒 View Order (<span id="c-cart-count">0</span> items)</span>
+    <span class="c-cart-btn-total">₹<span id="c-cart-total">0</span></span>
+  </button>
+</div>
+<div class="c-checkout" id="c-checkout">
+  <div class="c-checkout-card">
+    <div id="c-checkout-inner">
+      <div class="c-checkout-title">📋 Place Your Order</div>
+      <div class="c-order-summary" id="c-order-summary"></div>
+      <label class="c-form-label">Your Name *</label>
+      <input class="c-form-input" id="c-name" placeholder="Enter your name" type="text">
+      <label class="c-form-label">Phone Number *</label>
+      <input class="c-form-input" id="c-phone" placeholder="10-digit mobile number" type="tel" inputmode="numeric">
+      <label class="c-form-label">Special Note (optional)</label>
+      <input class="c-form-input" id="c-note" placeholder="e.g. extra spicy, no onion…" type="text">
+      <button class="c-place-btn" onclick="placeOnlineOrder()">✅ Place Order</button>
+      <button class="c-cancel-btn" onclick="closeCheckout()">← Back to Menu</button>
+    </div>
+    <div class="c-success" id="c-success">
+      <div class="c-success-icon">🎉</div>
+      <div class="c-success-title">Order Placed!</div>
+      <div class="c-success-sub">Your order has been sent to the restaurant.<br>We'll prepare it shortly. Thank you! 🙏</div>
+    </div>
+  </div>
+</div>`;
+
+  // Now load menu from Firebase and render
+  let tries=0;
+  while(!window._fb && tries<30){await new Promise(r=>setTimeout(r,100));tries++;}
+  if(!window._fb||!window._fb.enabled()){
+    document.getElementById('c-grid').innerHTML='<div class="c-err">⚠️ Could not connect to restaurant. Please try again.</div>';
+    return;
+  }
+  const {ref,get,set,onValue}=window._fb;
+  // Load menu
+  const snap = await get(ref(window._fb.db(),'dilliNihari/menu'));
+  const menuData = snap.val();
+  if(!menuData){
+    document.getElementById('c-grid').innerHTML='<div class="c-err">Menu not available right now.</div>';
+    return;
+  }
+  const cMenu = Object.values(menuData);
+  const cOrder = {};
+  let cActiveCat = 'All';
+
+  function getCats(){
+    const cats=['All'];
+    cMenu.forEach(i=>{const c=(i.category||'Uncategorised').trim();if(!cats.includes(c))cats.push(c);});
+    return cats;
+  }
+
+  function renderCCatBar(){
+    const bar=document.getElementById('c-cat-bar');
+    if(!bar)return;
+    bar.innerHTML='';
+    getCats().forEach(cat=>{
+      const btn=document.createElement('button');
+      btn.className='c-cat-tab'+(cActiveCat===cat?' active':'');
+      btn.textContent=cat;
+      btn.onclick=()=>{cActiveCat=cat;renderCCatBar();renderCGrid();};
+      bar.appendChild(btn);
+    });
+  }
+
+  function renderCGrid(){
+    const grid=document.getElementById('c-grid');
+    if(!grid)return;
+    grid.innerHTML='';
+    const filtered=cActiveCat==='All'?cMenu:cMenu.filter(m=>(m.category||'Uncategorised')===cActiveCat);
+    filtered.forEach(item=>{
+      const qty=cOrder[item.id]||0;
+      const div=document.createElement('div');
+      div.className='c-item'+(qty>0?' in-order':'');
+      const catTag=item.category?`<div class="c-item-cat">${item.category}</div>`:'';
+      if(qty>0){
+        div.innerHTML=`${catTag}<div class="c-item-name">${item.name}</div><div class="c-item-price">₹${item.price}</div>
+          <div class="c-qty-ctrl">
+            <button class="c-qty-btn" onclick="event.stopPropagation();cChangeQty(${item.id},-1)">−</button>
+            <span class="c-qty-val">${qty}</span>
+            <button class="c-qty-btn" onclick="event.stopPropagation();cChangeQty(${item.id},1)">+</button>
+          </div>`;
+      } else {
+        div.onclick=()=>cChangeQty(item.id,1);
+        div.innerHTML=`${catTag}<div class="c-item-name">${item.name}</div><div class="c-item-price">₹${item.price}</div><div class="c-item-hint">Tap to add</div>`;
+      }
+      grid.appendChild(div);
+    });
+  }
+
+  window.cChangeQty=function(id,delta){
+    const cur=cOrder[id]||0;
+    const next=cur+delta;
+    if(next<=0) delete cOrder[id]; else cOrder[id]=next;
+    renderCGrid();updateCCart();
+  };
+
+  function updateCCart(){
+    let total=0,count=0;
+    Object.entries(cOrder).forEach(([id,qty])=>{
+      const item=cMenu.find(m=>m.id==id);
+      if(item){total+=item.price*qty;count+=qty;}
+    });
+    const bar=document.getElementById('c-cart-bar');
+    if(bar) bar.style.display=count>0?'block':'none';
+    const cc=document.getElementById('c-cart-count');const ct=document.getElementById('c-cart-total');
+    if(cc) cc.textContent=count;
+    if(ct) ct.textContent=total;
+  }
+
+  window.openCheckout=function(){
+    let html='';let total=0;
+    Object.entries(cOrder).forEach(([id,qty])=>{
+      const item=cMenu.find(m=>m.id==id);
+      if(item){const sub=item.price*qty;total+=sub;html+=`<div class="c-sum-row"><span>${item.name} ×${qty}</span><span>₹${sub}</span></div>`;}
+    });
+    html+=`<div class="c-sum-total"><span>Total</span><span>₹${total}</span></div>`;
+    document.getElementById('c-order-summary').innerHTML=html;
+    document.getElementById('c-checkout').classList.add('open');
+    document.getElementById('c-checkout-inner').style.display='block';
+    document.getElementById('c-success').style.display='none';
+  };
+
+  window.closeCheckout=function(){
+    document.getElementById('c-checkout').classList.remove('open');
+  };
+
+  window.placeOnlineOrder=async function(){
+    const name=document.getElementById('c-name').value.trim();
+    const phone=document.getElementById('c-phone').value.trim();
+    const note=document.getElementById('c-note').value.trim();
+    if(!name){alert('Please enter your name');return;}
+    if(!phone||phone.length<10){alert('Please enter a valid 10-digit phone number');return;}
+    const items=[];let total=0;
+    Object.entries(cOrder).forEach(([id,qty])=>{
+      const item=cMenu.find(m=>m.id==id);
+      if(item){items.push({name:item.name,price:item.price,qty});total+=item.price*qty;}
+    });
+    const orderNo=Math.floor(Math.random()*9000)+1000;
+    const newOrder={
+      customerName:name,customerPhone:phone,note,
+      items,total,status:'pending',
+      orderNo,timestamp:Date.now()
+    };
+    try{
+      const {ref,push}=window._fb;
+      await push(ref(window._fb.db(),'dilliNihari/onlineOrders'),newOrder);
+      document.getElementById('c-checkout-inner').style.display='none';
+      document.getElementById('c-success').style.display='block';
+    } catch(e){
+      alert('Failed to place order. Please try again.\n'+e.message);
+    }
+  };
+
+  renderCCatBar();
+  renderCGrid();
+}
+
+// Only run POS init if NOT in customer mode
+if(new URLSearchParams(window.location.search).get('mode')!=='customer'){
+  init();
+}
 </script>
 </body>
 </html>
